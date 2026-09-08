@@ -1,0 +1,29 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "pnms",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "nameLower", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "pnms",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "assignedLead", "order": "ASCENDING" },
+        { "fieldPath": "lastContactedDate", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "pnms",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "lastContactedDate", "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
