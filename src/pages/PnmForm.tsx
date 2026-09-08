@@ -19,6 +19,7 @@ const BLANK: PnmDraft = {
   email: '',
   socials: {},
   major: '',
+  sourceEvent: '',
   sports: [],
   hobbies: [],
   interests: [],
@@ -63,7 +64,8 @@ export function PnmForm() {
       if (found) {
         const { id: _id, nameLower: _n, contactLog: _c, lastContactedDate: _l,
                 createdAt: _ca, createdBy: _cb, updatedAt: _u, ...rest } = found;
-        setDraft(rest);
+        // Records predating a field come back without it; keep the form controlled.
+        setDraft({ ...BLANK, ...rest });
         setPreviousLead(found.assignedLead);
       }
       setLoading(false);
@@ -188,6 +190,17 @@ export function PnmForm() {
               }
             />
           </div>
+        </div>
+
+        <div>
+          <label className="label" htmlFor="sourceEvent">Met at</label>
+          <input
+            id="sourceEvent"
+            className="field"
+            placeholder="Rush BBQ, referred by a brother…"
+            value={draft.sourceEvent ?? ''}
+            onChange={(e) => setDraft({ ...draft, sourceEvent: e.target.value })}
+          />
         </div>
 
         <div>

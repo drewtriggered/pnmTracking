@@ -1,6 +1,7 @@
 import {
   arrayRemove,
   arrayUnion,
+  runTransaction,
   collection,
   deleteDoc,
   doc,
@@ -16,7 +17,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { normalizePhone } from '../lib/format';
-import type { ContactMethod, Pnm, PnmDraft } from '../types/models';
+import type { ContactDetails, ContactLogEntry, Pnm, PnmDraft } from '../types/models';
 
 const pnmsRef = collection(db, 'pnms');
 
@@ -111,30 +112,76 @@ export async function deletePnm(pnm: Pnm): Promise<void> {
 }
 
 /**
- * Appends a contact entry and moves lastContactedDate forward.
+ * Strips blank optional fields so an entry never carries an empty string or a
+ * guessed method. Firestore also rejects undefined values outright.
+ */
+function cleanDetails(details: ContactDetails): ContactDetails {
+  const cleaned: ContactDetails = {};
+  if (details.method) cleaned.method = details.method;
+  if (details.notes?.trim()) cleaned.notes = details.notes.trim();
+  if (details.event?.trim()) cleaned.event = details.event.trim();
+  return cleaned;
+}
+
+/** lastContactedDate only ever moves forward, so back-dating an older
+ *  conversation can't make a PNM look freshly contacted. */
+function advanceContactDate(current: Pnm['lastContactedDate'], date: Timestamp) {
+  return !current || date.toMillis() > current.toMillis() ? { lastContactedDate: date } : {};
+}
+
+/**
+ * Appends a contact entry. Only the date and the brother are required — a
+ * one-tap log with no details at all is a complete, valid entry.
  *
  * arrayUnion makes the append atomic, so two brothers logging the same PNM at
- * once can't clobber each other. lastContactedDate is only advanced (never
- * rewound) so back-dating an older conversation doesn't make a PNM look cold.
+ * once can't clobber each other. Returns the new entry's id so the caller can
+ * offer to attach details to it afterwards.
  */
 export async function logContact(
   pnm: Pnm,
-  entry: { brotherId: string; method: ContactMethod; notes: string; date: Date },
-): Promise<void> {
+  entry: { brotherId: string; date: Date; details?: ContactDetails },
+): Promise<string> {
   const date = Timestamp.fromDate(entry.date);
-  const current = pnm.lastContactedDate;
-  const isNewest = !current || date.toMillis() > current.toMillis();
+  const id = crypto.randomUUID();
 
   await updateDoc(doc(db, 'pnms', pnm.id), {
     contactLog: arrayUnion({
-      id: crypto.randomUUID(),
+      id,
       date,
       brotherId: entry.brotherId,
-      method: entry.method,
-      notes: entry.notes.trim(),
+      ...cleanDetails(entry.details ?? {}),
     }),
-    ...(isNewest ? { lastContactedDate: date } : {}),
+    ...advanceContactDate(pnm.lastContactedDate, date),
     updatedAt: serverTimestamp(),
+  });
+  return id;
+}
+
+/**
+ * Attaches (or edits) the optional half of an existing entry — the path for a
+ * brother who taps first and remembers the details a moment later.
+ *
+ * arrayUnion can't rewrite an element in place, so this reads and rewrites the
+ * array in a transaction. The transaction retries on conflict, so a concurrent
+ * append from another brother is preserved rather than overwritten.
+ */
+export async function updateContactDetails(
+  pnmId: string,
+  entryId: string,
+  details: ContactDetails,
+): Promise<void> {
+  const ref = doc(db, 'pnms', pnmId);
+  await runTransaction(db, async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists()) return;
+
+    const log = (snap.data().contactLog ?? []) as ContactLogEntry[];
+    const next = log.map((entry) =>
+      entry.id === entryId
+        ? { id: entry.id, date: entry.date, brotherId: entry.brotherId, ...cleanDetails(details) }
+        : entry,
+    );
+    tx.update(ref, { contactLog: next, updatedAt: serverTimestamp() });
   });
 }
 
