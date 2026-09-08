@@ -31,14 +31,25 @@ export interface Socials {
   linkedin?: string;
 }
 
+/**
+ * Only `date` and `brotherId` are required. Everything else is detail a
+ * brother may add if they feel like it — the whole point of one-tap logging
+ * is that an entry with nothing but a date still counts, and an empty field
+ * is stored as absent rather than as a guess.
+ */
 export interface ContactLogEntry {
   /** Client-generated id so entries can be keyed and de-duplicated. */
   id: string;
   date: Timestamp;
   brotherId: string;
-  method: ContactMethod;
-  notes: string;
+  method?: ContactMethod;
+  notes?: string;
+  /** Rush event this contact happened at, if it happened at one. */
+  event?: string;
 }
+
+/** The optional half of a log entry, filled in now or added afterwards. */
+export type ContactDetails = Pick<ContactLogEntry, 'method' | 'notes' | 'event'>;
 
 export interface Pnm {
   id: string;
@@ -52,6 +63,12 @@ export interface Pnm {
   sports: string[];
   hobbies: string[];
   interests: string[];
+  /**
+   * The rush event where the chapter first met this PNM. Carried in the model
+   * for later event tie-in work (and as the landing spot for sign-in sheet
+   * imports); no event-specific screens are built yet.
+   */
+  sourceEvent: string;
   /** Brother document id, or null when nobody owns this PNM yet. */
   assignedLead: string | null;
   status: PnmStatus;

@@ -4,7 +4,7 @@ import { useAuth } from '../auth/AuthProvider';
 import { brotherName, watchBrothers } from '../data/brothers';
 import { assignLead, deletePnm, setStatus, watchPnm } from '../data/pnms';
 import { ContactAge } from '../components/ContactAge';
-import { LogContactDialog } from '../components/LogContactDialog';
+import { QuickLogCard } from '../components/QuickLogCard';
 import { Spinner } from '../components/Spinner';
 import { StatusBadge } from '../components/StatusBadge';
 import { formatDate, formatPhone, normalizePhone } from '../lib/format';
@@ -16,7 +16,6 @@ export function PnmDetail() {
   const { link, isExec } = useAuth();
   const [pnm, setPnm] = useState<Pnm | null | undefined>(undefined);
   const [brothers, setBrothers] = useState<Brother[]>([]);
-  const [logging, setLogging] = useState(false);
 
   useEffect(() => watchPnm(pnmId, setPnm), [pnmId]);
   useEffect(() => watchBrothers(setBrothers), []);
@@ -59,6 +58,9 @@ export function PnmDetail() {
           <div>
             <h2 className="text-xl font-semibold">{pnm.name}</h2>
             <p className="text-sm text-gray-500">{pnm.major || 'Major not recorded'}</p>
+            {pnm.sourceEvent && (
+              <p className="text-xs text-gray-500">Met at {pnm.sourceEvent}</p>
+            )}
           </div>
           <StatusBadge status={pnm.status} />
         </div>
@@ -123,10 +125,7 @@ export function PnmDetail() {
         </div>
 
         <div className="mt-4 flex gap-2">
-          <button className="btn-primary flex-1" onClick={() => setLogging(true)}>
-            Log a contact
-          </button>
-          <Link to={`/pnms/${pnm.id}/edit`} className="btn-secondary">
+          <Link to={`/pnms/${pnm.id}/edit`} className="btn-secondary flex-1">
             Edit
           </Link>
           {isExec && (
@@ -136,6 +135,8 @@ export function PnmDetail() {
           )}
         </div>
       </div>
+
+      {link && <QuickLogCard pnm={pnm} brotherId={link.brotherId} />}
 
       <div className="card">
         <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
@@ -151,11 +152,14 @@ export function PnmDetail() {
             {log.map((entry) => (
               <li key={entry.id} className="px-4 py-3">
                 <div className="flex items-baseline justify-between gap-2">
-                  <span className="text-sm font-medium">{entry.method}</span>
+                  <span className="text-sm font-medium">
+                    {entry.method ?? 'Contacted'}
+                  </span>
                   <span className="text-xs text-gray-500">{formatDate(entry.date)}</span>
                 </div>
                 <p className="text-xs text-gray-500">
                   {brotherName(brothers, entry.brotherId)}
+                  {entry.event && <span> · {entry.event}</span>}
                 </p>
                 {entry.notes && <p className="mt-1 text-sm text-gray-700">{entry.notes}</p>}
               </li>
@@ -163,14 +167,6 @@ export function PnmDetail() {
           </ul>
         )}
       </div>
-
-      {logging && link && (
-        <LogContactDialog
-          pnm={pnm}
-          brotherId={link.brotherId}
-          onClose={() => setLogging(false)}
-        />
-      )}
     </div>
   );
 }

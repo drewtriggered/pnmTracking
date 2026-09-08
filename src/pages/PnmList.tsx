@@ -59,6 +59,7 @@ export function PnmList() {
         const haystack = [
           pnm.name,
           pnm.major,
+          pnm.sourceEvent,
           pnm.email,
           pnm.phone,
           ...pnm.sports,

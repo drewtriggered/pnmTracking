@@ -12,8 +12,12 @@ built; the reminder system, exec dashboard and CSV import come later.
   Google account that has never claimed a code can reach nothing.
 - **PNM list** with free-text search and filters by status, major, sport and
   interest, plus an "only mine" toggle.
-- **PNM detail** with the full contact log, a one-tap *Log a contact*, and
-  inline status and lead changes.
+- **One-tap contact logging.** The *Log a contact* button writes an entry the
+  moment it is pressed — date and brother, nothing else required. Method,
+  notes and event sit on the same card as optional fields: fill them in first
+  and they ride along with the tap, or attach them to the entry afterwards
+  from the confirmation. Nothing optional can block a log.
+- **PNM detail** with the full contact log and inline status and lead changes.
 - **Duplicate detection** on name + phone before a new PNM is inserted.
 - **Exec roster**: add brothers, share or revoke invite codes, change roles.
 - Installable PWA (manifest + service worker), built mobile-first.
@@ -51,8 +55,13 @@ person's record, so an account can't be pointed at someone else's PNMs.
 
 ## Data model
 
-- `pnms/{id}` — name, phone, email, socials, major, sports[], hobbies[],
-  interests[], assignedLead, status, contactLog[], lastContactedDate.
+- `pnms/{id}` — name, phone, email, socials, major, sourceEvent, sports[],
+  hobbies[], interests[], assignedLead, status, contactLog[],
+  lastContactedDate.
+  A `contactLog` entry requires only `date` and `brotherId`; `method`, `notes`
+  and `event` are stored only when actually filled in, never as a default or a
+  guess. `sourceEvent` ("met at") is carried for later event tie-in work — no
+  event-specific screens are built yet.
   `contactLog` is an array appended with `arrayUnion`, so two brothers logging
   the same PNM at once cannot clobber each other. `lastContactedDate` is
   derived from it and denormalised onto the document so the reminder job and
@@ -82,9 +91,15 @@ exec), the invite claim transaction, code reuse and forgery, and role changes.
 
 ## Not built yet
 
-- Phase 3 — daily reminder Cloud Function (5-day nudge to the lead, snooze,
-  10-day escalation to exec) and Cloud Messaging registration.
-- Exec dashboard — contact coverage, PNMs going cold, status breakdown.
-- Lead reassignment history.
-- CSV bulk import for rush sign-in sheets (`findDuplicates` in
-  `src/data/pnms.ts` is already the shared entry point for it).
+In build order:
+
+1. **Reminder engine** — daily Cloud Function that pushes to the assigned lead
+   when `lastContactedDate` passes 5 days, plus Cloud Messaging registration.
+2. **Leaderboard** — brothers ranked by contacts logged this week, response
+   time, and PNMs moved to bid extended, aggregated from `contactLog`.
+3. **Exec dashboard** — chapter-wide contact coverage, PNMs going cold, status
+   breakdown.
+
+Deferred further out: event-specific tracking screens and CSV import for rush
+sign-in sheets (`findDuplicates` in `src/data/pnms.ts` is the shared entry
+point for it), and lead reassignment history.
