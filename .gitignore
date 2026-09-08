@@ -1,0 +1,17 @@
+node_modules
+dist
+dev-dist
+.env
+.env.local
+.env.*.local
+.firebaserc
+serviceAccountKey.json
+*-service-account*.json
+.firebase
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+.DS_Store
+functions/node_modules
+functions/lib
+*.tsbuildinfo

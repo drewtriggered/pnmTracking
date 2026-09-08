@@ -1,0 +1,127 @@
+rules_version = '2';
+
+// Access model
+// ------------
+// A "member" is an authenticated user who has claimed an invite code, which
+// creates a userLinks/{uid} doc pointing at their brother record. Nothing in
+// the chapter's data is readable until that link exists, so a stray Google
+// account that reaches the app sees only the join screen.
+//
+// The claim itself is a three-document transaction (invite, brother,
+// userLink). Rules can't see the other writes in a transaction, so each
+// document validates independently against the pre-transaction state of the
+// invite. That is enough: an invite is bound to exactly one brother, and a
+// brother record can only ever be claimed while its uid is null.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function link() {
+      return get(/databases/$(database)/documents/userLinks/$(request.auth.uid)).data;
+    }
+
+    function isMember() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/userLinks/$(request.auth.uid));
+    }
+
+    // Role is read from the brother record, not the cached copy on the link,
+    // so an exec promoting or demoting someone takes effect immediately
+    // instead of waiting for that user to re-claim a code.
+    function isExec() {
+      return isMember()
+        && get(/databases/$(database)/documents/brothers/$(link().brotherId)).data.role == 'exec';
+    }
+
+    function invite(code) {
+      return get(/databases/$(database)/documents/invites/$(code)).data;
+    }
+
+    // An invite that is real, unclaimed, and issued for this brother.
+    function validInviteFor(code, brotherId) {
+      return code is string
+        && exists(/databases/$(database)/documents/invites/$(code))
+        && invite(code).claimedByUid == null
+        && invite(code).brotherId == brotherId;
+    }
+
+    function changedKeys() {
+      return request.resource.data.diff(resource.data).affectedKeys();
+    }
+
+    // --- Invites ---------------------------------------------------------
+    // Codes are unguessable random ids. `get` is allowed for any signed-in
+    // user (you need to read the code you were handed to claim it) but `list`
+    // is exec-only, so nobody can enumerate outstanding codes.
+    match /invites/{code} {
+      allow get: if signedIn();
+      allow list: if isExec();
+      allow create, delete: if isExec();
+
+      // Two writers: exec revoking/regenerating, or a user burning the code.
+      allow update: if isExec()
+        || (
+          signedIn()
+          && resource.data.claimedByUid == null
+          && changedKeys().hasOnly(['claimedByUid', 'claimedAt'])
+          && request.resource.data.claimedByUid == request.auth.uid
+        );
+    }
+
+    // --- Brothers --------------------------------------------------------
+    match /brothers/{brotherId} {
+      allow read: if isMember();
+      allow create, delete: if isExec();
+
+      allow update: if isExec()
+        // Claiming: bind this record to the signed-in account, once.
+        || (
+          signedIn()
+          && resource.data.uid == null
+          && changedKeys().hasOnly(['uid', 'inviteCode', 'claimedAt'])
+          && request.resource.data.uid == request.auth.uid
+          && validInviteFor(request.resource.data.inviteCode, brotherId)
+        )
+        // A brother maintains their own contact details, but not their role
+        // and not their PNM assignments.
+        || (
+          isMember()
+          && resource.data.uid == request.auth.uid
+          && changedKeys().hasOnly(['name', 'phone'])
+        );
+    }
+
+    // --- User -> brother links -------------------------------------------
+    // The membership check every other rule reads: its existence is what makes
+    // an account a member. The role stored here is a record of the role at
+    // claim time; authorization always reads the brother record instead.
+    match /userLinks/{uid} {
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow list: if isExec();
+
+      allow create: if signedIn()
+        && request.auth.uid == uid
+        && validInviteFor(request.resource.data.inviteCode, request.resource.data.brotherId)
+        && request.resource.data.role ==
+             get(/databases/$(database)/documents/brothers/$(request.resource.data.brotherId)).data.role;
+
+      // Role changes go through the brother record (exec-only), never here.
+      allow update, delete: if isExec();
+    }
+
+    // --- PNMs ------------------------------------------------------------
+    // Any member can see and work the whole board — a brother often runs into
+    // someone else's PNM at an event and should be able to log it.
+    match /pnms/{pnmId} {
+      allow read: if isMember();
+      allow create: if isMember()
+        && request.resource.data.createdBy == request.auth.uid;
+      allow update: if isMember();
+      allow delete: if isExec();
+    }
+  }
+}
