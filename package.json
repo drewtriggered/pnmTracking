@@ -12,8 +12,11 @@
     "deploy": "npm run build && firebase deploy",
     "deploy:hosting": "npm run build && firebase deploy --only hosting",
     "deploy:rules": "firebase deploy --only firestore:rules,firestore:indexes",
-    "test:rules": "firebase emulators:exec --only firestore --project pnm-rules-test \"vitest run\"",
-    "emulators": "firebase emulators:start --project demo-pnm"
+    "test:rules": "firebase emulators:exec --only firestore --project pnm-rules-test \"vitest run tests/rules.test.ts\"",
+    "emulators": "firebase emulators:start --project demo-pnm",
+    "test": "npm run test:unit && npm run test:rules",
+    "test:unit": "vitest run tests/reminders.test.ts",
+    "deploy:functions": "firebase deploy --only functions"
   },
   "dependencies": {
     "firebase": "^12.18.0",

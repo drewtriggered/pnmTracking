@@ -58,6 +58,17 @@ beforeEach(async () => {
       brotherId: 'gen1', brotherName: 'General Gray', role: 'general',
       createdBy: 'exec-uid', claimedByUid: null, claimedAt: null,
     });
+    await setDoc(doc(db, 'brothers/admin1'), {
+      name: 'Admin Avery', phone: '', role: 'general', assignedPnmIds: [],
+      uid: 'admin-uid', reminderAdmin: true,
+    });
+    await setDoc(doc(db, 'userLinks/admin-uid'), {
+      brotherId: 'admin1', role: 'general', inviteCode: 'SEEDSEEDSG',
+    });
+    await setDoc(doc(db, 'settings/reminders'), { coldAfterDays: 5, escalateAfterDays: 10 });
+    await setDoc(doc(db, 'reminderSends/send1'), {
+      brotherId: 'gen1', variantId: 'a', pnmIds: ['pnm1'], actedAt: null,
+    });
     await setDoc(doc(db, 'pnms/pnm1'), {
       name: 'Rush Rick', nameLower: 'rush rick', phone: '5550001111', email: '',
       socials: {}, major: 'CS', sports: [], hobbies: [], interests: [],
@@ -71,6 +82,7 @@ const exec = () => env.authenticatedContext('exec-uid').firestore();
 const member = () => env.authenticatedContext('gen-uid').firestore();
 const stranger = () => env.authenticatedContext('stranger-uid').firestore();
 const anon = () => env.unauthenticatedContext().firestore();
+const reminderAdmin = () => env.authenticatedContext('admin-uid').firestore();
 
 describe('membership gate', () => {
   it('blocks signed-out users from PNMs', async () => {
@@ -224,5 +236,56 @@ describe('roles and self-service', () => {
       await updateDoc(doc(ctx.firestore(), 'brothers/gen1'), { role: 'exec' });
     });
     await assertSucceeds(getDocs(collection(member(), 'invites')));
+  });
+});
+
+describe('reminder settings and experiment data', () => {
+  it('lets any member read the thresholds the UI colours from', async () => {
+    await assertSucceeds(getDoc(doc(member(), 'settings/reminders')));
+    await assertSucceeds(getDoc(doc(exec(), 'settings/reminders')));
+    await assertFails(getDoc(doc(stranger(), 'settings/reminders')));
+  });
+
+  it('reserves changing them for reminder admins — exec is not enough', async () => {
+    await assertFails(updateDoc(doc(member(), 'settings/reminders'), { coldAfterDays: 1 }));
+    await assertFails(updateDoc(doc(exec(), 'settings/reminders'), { coldAfterDays: 1 }));
+    await assertSucceeds(
+      updateDoc(doc(reminderAdmin(), 'settings/reminders'), { coldAfterDays: 3 }),
+    );
+  });
+
+  it('keeps experiment results readable only to reminder admins', async () => {
+    await assertSucceeds(getDoc(doc(reminderAdmin(), 'reminderSends/send1')));
+    await assertFails(getDoc(doc(member(), 'reminderSends/send1')));
+    await assertFails(getDoc(doc(exec(), 'reminderSends/send1')));
+  });
+
+  it('refuses every client write to the results, even from an admin', async () => {
+    // Only the Cloud Function writes these, via the Admin SDK.
+    await assertFails(
+      updateDoc(doc(reminderAdmin(), 'reminderSends/send1'), { actedAt: new Date() }),
+    );
+    await assertFails(
+      setDoc(doc(reminderAdmin(), 'reminderSends/forged'), { brotherId: 'admin1' }),
+    );
+  });
+
+  it('lets a brother register their own device but not grant themselves access', async () => {
+    await assertSucceeds(
+      updateDoc(doc(member(), 'brothers/gen1'), { fcmTokens: ['token-abc'] }),
+    );
+    await assertFails(
+      updateDoc(doc(member(), 'brothers/gen1'), { reminderAdmin: true }),
+    );
+    // Exec grants the capability.
+    await assertSucceeds(
+      updateDoc(doc(exec(), 'brothers/gen1'), { reminderAdmin: true }),
+    );
+  });
+
+  it('does not let a brother register a device on someone else s record', async () => {
+    await assertFails(
+      updateDoc(doc(member(), 'brothers/exec1'), { fcmTokens: ['stolen'] }),
+    );
   });
 });
