@@ -2,11 +2,13 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider, useAuth } from './auth/AuthProvider';
 import { Layout } from './components/Layout';
 import { Spinner } from './components/Spinner';
+import { SettingsProvider } from './settings/SettingsProvider';
 import { Brothers } from './pages/Brothers';
 import { Join } from './pages/Join';
 import { PnmDetail } from './pages/PnmDetail';
 import { PnmForm } from './pages/PnmForm';
 import { PnmList } from './pages/PnmList';
+import { Settings } from './pages/Settings';
 import { SignIn } from './pages/SignIn';
 
 /**
@@ -32,6 +34,7 @@ function Routing() {
           path="/brothers"
           element={isExec ? <Brothers /> : <Navigate to="/pnms" replace />}
         />
+        <Route path="/settings" element={<Settings />} />
       </Route>
       {/* Anything else, including the /join link once claimed, lands on the list. */}
       <Route path="*" element={<Navigate to="/pnms" replace />} />
@@ -43,7 +46,9 @@ export function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <Routing />
+        <SettingsProvider>
+          <Routing />
+        </SettingsProvider>
       </AuthProvider>
     </BrowserRouter>
   );

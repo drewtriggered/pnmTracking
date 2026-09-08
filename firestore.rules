@@ -37,6 +37,15 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/brothers/$(link().brotherId)).data.role == 'exec';
     }
 
+    // Deliberately narrower than exec: tuning thresholds or swapping
+    // notification copy mid-experiment would invalidate the results, so it is
+    // a capability exec grants to specific people rather than a whole board.
+    function isReminderAdmin() {
+      return isMember()
+        && get(/databases/$(database)/documents/brothers/$(link().brotherId))
+             .data.reminderAdmin == true;
+    }
+
     function invite(code) {
       return get(/databases/$(database)/documents/invites/$(code)).data;
     }
@@ -86,12 +95,13 @@ service cloud.firestore {
           && request.resource.data.uid == request.auth.uid
           && validInviteFor(request.resource.data.inviteCode, brotherId)
         )
-        // A brother maintains their own contact details, but not their role
-        // and not their PNM assignments.
+        // A brother maintains their own contact details and registers their
+        // own devices for push, but not their role, their reminder-admin
+        // capability, or their PNM assignments.
         || (
           isMember()
           && resource.data.uid == request.auth.uid
-          && changedKeys().hasOnly(['name', 'phone'])
+          && changedKeys().hasOnly(['name', 'phone', 'fcmTokens'])
         );
     }
 
@@ -111,6 +121,23 @@ service cloud.firestore {
 
       // Role changes go through the brother record (exec-only), never here.
       allow update, delete: if isExec();
+    }
+
+    // --- Reminder settings -----------------------------------------------
+    // Readable by every member because the app colours "going cold" from the
+    // same thresholds the daily job uses; writable only by reminder admins.
+    match /settings/{docId} {
+      allow read: if isMember();
+      allow write: if isReminderAdmin();
+    }
+
+    // --- Reminder sends ----------------------------------------------------
+    // The experiment's raw results. Written only by the Cloud Function, which
+    // uses the Admin SDK and bypasses these rules entirely, so every client
+    // write is refused — nobody can pad their own act-rate.
+    match /reminderSends/{sendId} {
+      allow read: if isReminderAdmin();
+      allow write: if false;
     }
 
     // --- PNMs ------------------------------------------------------------

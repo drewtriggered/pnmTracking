@@ -41,6 +41,14 @@ export async function setBrotherRole(brotherId: string, role: BrotherRole): Prom
   await updateDoc(doc(db, 'brothers', brotherId), { role });
 }
 
+/**
+ * Grants the capability to tune reminder thresholds and run notification
+ * experiments. Exec-only to set, and separate from the exec role itself.
+ */
+export async function setReminderAdmin(brotherId: string, canManage: boolean): Promise<void> {
+  await updateDoc(doc(db, 'brothers', brotherId), { reminderAdmin: canManage });
+}
+
 /** Keeps Brother.assignedPnmIds in step with Pnm.assignedLead. */
 export async function addPnmToBrother(brotherId: string, pnmId: string): Promise<void> {
   await updateDoc(doc(db, 'brothers', brotherId), { assignedPnmIds: arrayUnion(pnmId) });

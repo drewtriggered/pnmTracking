@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../auth/AuthProvider';
-import { createBrother, setBrotherRole, watchBrothers } from '../data/brothers';
+import {
+  createBrother,
+  setBrotherRole,
+  setReminderAdmin,
+  watchBrothers,
+} from '../data/brothers';
 import { createInvite, revokeInvite, watchInvites } from '../data/invites';
 import { inviteLink } from '../lib/codes';
 import { Spinner } from '../components/Spinner';
@@ -158,6 +163,15 @@ export function Brothers() {
                   {brother.uid ? 'Account linked' : 'Not signed in yet'} ·{' '}
                   {brother.assignedPnmIds.length} PNMs
                 </p>
+                <label className="mt-1 flex items-center gap-1.5 text-xs text-gray-600">
+                  <input
+                    type="checkbox"
+                    className="h-3.5 w-3.5 rounded border-gray-300"
+                    checked={brother.reminderAdmin === true}
+                    onChange={(e) => void setReminderAdmin(brother.id, e.target.checked)}
+                  />
+                  Reminder admin
+                </label>
               </div>
               <div className="flex shrink-0 items-center gap-2">
                 <select

@@ -34,6 +34,9 @@ export function Layout() {
               Brothers
             </NavLink>
           )}
+          <NavLink to="/settings" className={tab}>
+            Settings
+          </NavLink>
         </nav>
       </header>
       <main className="mx-auto max-w-3xl px-4 py-4">

@@ -94,6 +94,14 @@ export interface Brother {
   name: string;
   phone: string;
   role: BrotherRole;
+  /**
+   * Tunes reminder thresholds and runs notification experiments. Deliberately
+   * separate from the exec role: a whole exec board retuning thresholds
+   * mid-experiment would make the results meaningless.
+   */
+  reminderAdmin?: boolean;
+  /** Web push registration tokens, one per device the brother enabled. */
+  fcmTokens?: string[];
   assignedPnmIds: string[];
   /** Auth uid once the brother has claimed their invite; null until then. */
   uid: string | null;
@@ -120,4 +128,21 @@ export interface UserLink {
   brotherId: string;
   role: BrotherRole;
   inviteCode: string;
+}
+
+/** One reminder notification, written by the daily job. Read-only to clients. */
+export interface ReminderSend {
+  id: string;
+  brotherId: string;
+  kind: 'lead' | 'escalation';
+  pnmIds: string[];
+  variantId: string;
+  experimentId: string;
+  title: string;
+  body: string;
+  day: string;
+  devicesReached: number;
+  sentAt: Timestamp | null;
+  /** Set by a later run if the brother logged a contact for one of the PNMs. */
+  actedAt: Timestamp | null;
 }
