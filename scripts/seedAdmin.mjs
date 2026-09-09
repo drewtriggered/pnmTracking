@@ -52,9 +52,44 @@ const projectId = existsSync('.firebaserc')
   ? JSON.parse(readFileSync('.firebaserc', 'utf8')).projects?.default
   : undefined;
 
+/**
+ * The Firebase console hands out several different JSON files, and only one of
+ * them is a service account key. Passing the wrong one fails deep inside the
+ * Admin SDK with "must contain a string project_id property", which doesn't
+ * hint that you grabbed the web config by mistake. So check the shape here and
+ * say what the file actually looks like.
+ */
+function loadServiceAccount() {
+  const parsed = JSON.parse(readFileSync(KEY_PATH, 'utf8'));
+  if (parsed.project_id && parsed.client_email && parsed.private_key) return parsed;
+
+  const found = Object.keys(parsed).join(', ') || '(nothing)';
+  const looksLikeWebConfig = 'apiKey' in parsed || 'appId' in parsed;
+
+  console.error(`${KEY_PATH} is not a service account key.
+
+It contains: ${found}
+${
+  looksLikeWebConfig
+    ? `
+That is the web app config — the apiKey/appId block that belongs in .env, not
+here.`
+    : ''
+}
+A service account key has "type": "service_account" plus "project_id",
+"client_email" and "private_key". Get one from:
+
+  Firebase console -> Project settings -> Service accounts
+  -> Generate new private key
+
+(That is a different page from Project settings -> General, where the web
+config lives.)`);
+  process.exit(1);
+}
+
 initializeApp(
   existsSync(KEY_PATH)
-    ? { credential: cert(JSON.parse(readFileSync(KEY_PATH, 'utf8'))) }
+    ? { credential: cert(loadServiceAccount()) }
     : { credential: applicationDefault(), projectId },
 );
 
