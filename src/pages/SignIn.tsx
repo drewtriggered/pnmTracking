@@ -1,6 +1,31 @@
 import { useState } from 'react';
 import { useAuth } from '../auth/AuthProvider';
 
+/**
+ * Turns a Firebase auth code into something the person in front of the screen
+ * can act on. Anything unrecognised still shows its code, so it can be
+ * reported without digging through devtools.
+ */
+function describeSignInError(code: string): string {
+  switch (code) {
+    case 'auth/operation-not-allowed':
+    case 'auth/configuration-not-found':
+      return 'Google sign-in is not switched on for this Firebase project yet (Authentication → Sign-in method).';
+    case 'auth/unauthorized-domain':
+      return `This site (${window.location.hostname}) is not on the project's authorized domains list (Authentication → Settings).`;
+    case 'auth/network-request-failed':
+      return 'Could not reach Google. Check your connection and try again.';
+    case 'auth/popup-blocked':
+      return 'Your browser blocked the sign-in window. Allow popups for this site, or try again to be redirected instead.';
+    case 'auth/too-many-requests':
+      return 'Too many attempts. Wait a minute and try again.';
+    case '':
+      return 'Could not sign in. Try again.';
+    default:
+      return `Could not sign in (${code}). Try again.`;
+  }
+}
+
 export function SignIn() {
   const { signIn } = useAuth();
   const [error, setError] = useState<string | null>(null);
@@ -12,11 +37,16 @@ export function SignIn() {
     try {
       await signIn();
     } catch (e) {
-      const code = (e as { code?: string }).code;
-      // Closing the Google popup is a normal thing to do, not an error worth showing.
-      if (code !== 'auth/popup-closed-by-user' && code !== 'auth/cancelled-popup-request') {
-        setError('Could not sign in. Try again.');
+      // Keep the raw error in the console: the code is the fastest route to a
+      // diagnosis, and a vague "try again" wastes everyone's time.
+      console.error('Sign-in failed', e);
+      const code = (e as { code?: string }).code ?? '';
+
+      // Closing the Google popup is a normal thing to do, not an error.
+      if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
+        return;
       }
+      setError(describeSignInError(code));
     } finally {
       setBusy(false);
     }
