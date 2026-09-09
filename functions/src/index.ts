@@ -10,7 +10,9 @@ import {
   dayKey,
   hourInZone,
   pickVariant,
+  pushMessageFor,
   renderMessage,
+  tapTarget,
   type Digest,
   type PnmSnapshot,
   type ReminderSettings,
@@ -90,13 +92,26 @@ async function deliver(
   if (brother.fcmTokens.length > 0) {
     const response = await getMessaging().sendEachForMulticast({
       tokens: brother.fcmTokens,
-      notification: { title, body },
-      data: { kind: digest.kind, variantId: variant.id },
-      webpush: settings.appUrl
-        ? { fcmOptions: { link: settings.appUrl } }
-        : undefined,
+      ...pushMessageFor({
+        title,
+        body,
+        kind: digest.kind,
+        variantId: variant.id,
+        appUrl: settings.appUrl,
+      }),
     });
     delivered = response.successCount;
+
+    // A brother with tokens and nothing delivered is the shape of a broken
+    // setup rather than a quiet day, and it is invisible without this line.
+    if (delivered === 0) {
+      logger.warn(`No device reached for ${brother.name || brother.id}`, {
+        brotherId: brother.id,
+        errors: response.responses
+          .filter((result) => !result.success)
+          .map((result) => result.error?.code ?? 'unknown'),
+      });
+    }
 
     // Drop tokens the device has thrown away, or they accumulate forever.
     const dead: string[] = [];
@@ -260,10 +275,35 @@ export const sendTestReminder = onCall(async (request) => {
 
   const response = await getMessaging().sendEachForMulticast({
     tokens,
-    notification: { title, body },
-    data: { kind: 'test', variantId: variant.id },
-    webpush: settings.appUrl ? { fcmOptions: { link: settings.appUrl } } : undefined,
+    ...pushMessageFor({
+      title,
+      body,
+      kind: 'test',
+      variantId: variant.id,
+      appUrl: settings.appUrl,
+    }),
   });
 
-  return { variantId: variant.id, title, body, devicesReached: response.successCount };
+  // The test exists to prove the chain, so it reports what actually happened
+  // to each device instead of a count the caller has to interpret.
+  const failures = response.responses
+    .filter((result) => !result.success)
+    .map((result) => result.error?.message ?? 'unknown error');
+
+  if (response.successCount === 0) {
+    throw new HttpsError(
+      'unavailable',
+      `FCM accepted no device: ${failures.join('; ') || 'no reason given'}. ` +
+        'Re-register this device with "Turn on reminders".',
+    );
+  }
+
+  return {
+    variantId: variant.id,
+    title,
+    body,
+    devicesReached: response.successCount,
+    devicesFailed: failures.length,
+    appUrlUsable: tapTarget(settings.appUrl) !== null,
+  };
 });

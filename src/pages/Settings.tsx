@@ -6,6 +6,7 @@ import { useReminderSettings } from '../settings/SettingsProvider';
 import { saveReminderSettings, watchReminderSends } from '../data/settings';
 import { PushToggle } from '../components/PushToggle';
 import { firebaseApp } from '../lib/firebase';
+import { tapTarget } from '../../functions/src/logic';
 import type { NotificationVariant, ReminderSettings } from '../../functions/src/logic';
 import type { ReminderSend } from '../types/models';
 
@@ -164,12 +165,16 @@ export function Settings() {
     setBusy(true);
     setError(null);
     try {
-      const call = httpsCallable<unknown, { variantId: string; title: string }>(
-        getFunctions(firebaseApp),
-        'sendTestReminder',
+      const call = httpsCallable<
+        unknown,
+        { variantId: string; devicesReached: number; appUrlUsable: boolean }
+      >(getFunctions(firebaseApp), 'sendTestReminder');
+      const { variantId, devicesReached, appUrlUsable } = (await call({})).data;
+      setNotice(
+        `Sent the "${variantId}" variant to ${devicesReached} device${
+          devicesReached === 1 ? '' : 's'
+        }.${appUrlUsable ? '' : ' Set an https App URL to make it open the app.'}`,
       );
-      const result = await call({});
-      setNotice(`Sent you the "${result.data.variantId}" variant.`);
     } catch (e) {
       setError(
         (e as { message?: string }).message ??
@@ -278,6 +283,16 @@ export function Settings() {
                 value={draft.appUrl}
                 onChange={(e) => edit({ appUrl: e.target.value })}
               />
+              {/* FCM refuses a link that isn't absolute https, and refusing the
+                  link means refusing the whole notification — so an address
+                  saved without its scheme would quietly stop every reminder.
+                  The server drops it rather than send nothing; say so here. */}
+              {draft.appUrl.trim() !== '' && tapTarget(draft.appUrl) === null && (
+                <p className="mt-1 text-sm text-amber-700">
+                  Needs to start with <code>https://</code> — until it does, reminders
+                  still send but tapping one won't open the app.
+                </p>
+              )}
             </div>
           </div>
 
