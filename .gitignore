@@ -4,7 +4,6 @@ dev-dist
 .env
 .env.local
 .env.*.local
-.firebaserc
 serviceAccountKey.json
 *-service-account*.json
 .firebase
