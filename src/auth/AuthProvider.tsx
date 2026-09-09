@@ -6,7 +6,14 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { onAuthStateChanged, signOut as fbSignOut, signInWithPopup, type User } from 'firebase/auth';
+import {
+  getRedirectResult,
+  onAuthStateChanged,
+  signOut as fbSignOut,
+  signInWithPopup,
+  signInWithRedirect,
+  type User,
+} from 'firebase/auth';
 import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { auth, db, googleProvider } from '../lib/firebase';
 import type { Brother, UserLink } from '../types/models';
@@ -34,6 +41,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [brother, setBrother] = useState<Brother | null>(null);
   const [authResolved, setAuthResolved] = useState(false);
   const [linkResolved, setLinkResolved] = useState(false);
+
+  // Completes a redirect sign-in. onAuthStateChanged reports the user either
+  // way, but this is where a failed redirect surfaces its reason.
+  useEffect(() => {
+    getRedirectResult(auth).catch((e) => {
+      console.error('Redirect sign-in failed', e);
+    });
+  }, []);
 
   useEffect(() => {
     return onAuthStateChanged(auth, (next) => {
@@ -88,7 +103,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isExec: (brother?.role ?? link?.role) === 'exec',
       loading: !authResolved || !linkResolved,
       signIn: async () => {
-        await signInWithPopup(auth, googleProvider);
+        // An installed PWA has no real window to pop up into — on iOS the
+        // popup either never opens or can't hand its result back — so go
+        // straight to redirect there.
+        if (window.matchMedia('(display-mode: standalone)').matches) {
+          await signInWithRedirect(auth, googleProvider);
+          return;
+        }
+
+        try {
+          await signInWithPopup(auth, googleProvider);
+        } catch (e) {
+          const code = (e as { code?: string }).code ?? '';
+          // A blocked or unreachable popup is a browser policy decision, not
+          // something the user can fix; a full-page redirect works regardless.
+          if (
+            code === 'auth/popup-blocked' ||
+            code === 'auth/operation-not-supported-in-this-environment' ||
+            code === 'auth/web-storage-unsupported' ||
+            code === 'auth/internal-error'
+          ) {
+            await signInWithRedirect(auth, googleProvider);
+            return;
+          }
+          throw e;
+        }
       },
       signOut: async () => {
         await fbSignOut(auth);
