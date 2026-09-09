@@ -31,10 +31,31 @@ if (!values.name) {
 }
 
 const KEY_PATH = 'serviceAccountKey.json';
+
+// Without this check the Admin SDK falls back to ambient Google credentials,
+// which on a laptop don't exist, and the failure surfaces 40 lines later as
+// "Unable to detect a Project Id" — which tells you nothing about the real
+// problem, a missing key file.
+if (!existsSync(KEY_PATH) && !process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+  console.error(`Could not find ${KEY_PATH} in ${process.cwd()}
+
+Firebase console -> Project settings -> Service accounts -> Generate new
+private key, then save the downloaded file into that folder with exactly
+that name. It is gitignored, and you can delete it once you have claimed
+your invite code.`);
+  process.exit(1);
+}
+
+// Pulled from .firebaserc so the ambient-credentials path knows which project
+// it is talking to.
+const projectId = existsSync('.firebaserc')
+  ? JSON.parse(readFileSync('.firebaserc', 'utf8')).projects?.default
+  : undefined;
+
 initializeApp(
   existsSync(KEY_PATH)
     ? { credential: cert(JSON.parse(readFileSync(KEY_PATH, 'utf8'))) }
-    : { credential: applicationDefault() },
+    : { credential: applicationDefault(), projectId },
 );
 
 const db = getFirestore();
