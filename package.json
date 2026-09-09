@@ -15,8 +15,9 @@
     "test:rules": "firebase emulators:exec --only firestore --project pnm-rules-test \"vitest run tests/rules.test.ts\"",
     "emulators": "firebase emulators:start --project demo-pnm",
     "test": "npm run test:unit && npm run test:rules",
-    "test:unit": "vitest run tests/reminders.test.ts",
-    "deploy:functions": "firebase deploy --only functions"
+    "test:unit": "vitest run tests/reminders.test.ts tests/import.test.ts",
+    "deploy:functions": "firebase deploy --only functions",
+    "import:pnms": "node scripts/importPnms.mjs"
   },
   "dependencies": {
     "firebase": "^12.18.0",

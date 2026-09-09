@@ -19,6 +19,9 @@ const BLANK: PnmDraft = {
   email: '',
   socials: {},
   major: '',
+  year: '',
+  gpa: '',
+  notes: '',
   sourceEvent: '',
   sports: [],
   hobbies: [],
@@ -156,13 +159,36 @@ export function PnmForm() {
           </div>
         </div>
 
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div className="sm:col-span-2">
+            <label className="label" htmlFor="major">Major</label>
+            <input
+              id="major"
+              className="field"
+              value={draft.major}
+              onChange={(e) => setDraft({ ...draft, major: e.target.value })}
+            />
+          </div>
+          <div>
+            <label className="label" htmlFor="year">Year</label>
+            <input
+              id="year"
+              className="field"
+              placeholder="Freshman"
+              value={draft.year ?? ''}
+              onChange={(e) => setDraft({ ...draft, year: e.target.value })}
+            />
+          </div>
+        </div>
+
         <div>
-          <label className="label" htmlFor="major">Major</label>
+          <label className="label" htmlFor="gpa">GPA</label>
           <input
-            id="major"
+            id="gpa"
             className="field"
-            value={draft.major}
-            onChange={(e) => setDraft({ ...draft, major: e.target.value })}
+            placeholder="3.1, or Above 2.75"
+            value={draft.gpa ?? ''}
+            onChange={(e) => setDraft({ ...draft, gpa: e.target.value })}
           />
         </div>
 
@@ -233,6 +259,18 @@ export function PnmForm() {
             placeholder="comma separated"
             value={draft.interests.join(', ')}
             onChange={(e) => setDraft({ ...draft, interests: parseList(e.target.value) })}
+          />
+        </div>
+
+        <div>
+          <label className="label" htmlFor="notes">Notes</label>
+          <textarea
+            id="notes"
+            className="field"
+            rows={3}
+            placeholder="Anything the chapter should know about him."
+            value={draft.notes ?? ''}
+            onChange={(e) => setDraft({ ...draft, notes: e.target.value })}
           />
         </div>
 

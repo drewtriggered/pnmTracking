@@ -57,7 +57,10 @@ export function PnmDetail() {
         <div className="flex items-start justify-between gap-3">
           <div>
             <h2 className="text-xl font-semibold">{pnm.name}</h2>
-            <p className="text-sm text-gray-500">{pnm.major || 'Major not recorded'}</p>
+            <p className="text-sm text-gray-500">
+              {[pnm.year, pnm.major].filter(Boolean).join(' · ') || 'Major not recorded'}
+              {pnm.gpa && <span className="ml-1 text-gray-400">· GPA {pnm.gpa}</span>}
+            </p>
             {pnm.sourceEvent && (
               <p className="text-xs text-gray-500">Met at {pnm.sourceEvent}</p>
             )}
@@ -79,6 +82,12 @@ export function PnmDetail() {
           {pnm.socials.instagram && <span className="text-gray-600">IG @{pnm.socials.instagram}</span>}
           {pnm.socials.snapchat && <span className="text-gray-600">Snap @{pnm.socials.snapchat}</span>}
         </div>
+
+        {pnm.notes && (
+          <p className="mt-3 whitespace-pre-line rounded-lg bg-gray-50 px-3 py-2 text-sm text-gray-700">
+            {pnm.notes}
+          </p>
+        )}
 
         {tags.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-1.5">
