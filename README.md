@@ -200,11 +200,26 @@ rush sign-in sheets, and lead reassignment history.
 `scripts/importPnms.mjs` reads the chapter's "Potential New Member List"
 export — title block, header partway down, multi-name lead cells and all.
 
+Your sheet is already in the repo as `pnm-list.csv`, so the short form is:
+
 ```bash
-npm run import:pnms -- --file "PNM List.csv"            # preview, writes nothing
-npm run import:pnms -- --file "PNM List.csv" --commit   # apply
-npm run import:pnms -- --file "PNM List.csv" --commit --create-leads
+npm run import:pnms                      # preview, writes nothing
+npm run import:pnms -- --commit          # apply
+npm run import:pnms -- --commit --create-leads
 ```
+
+To import a fresh export instead, point `--file` at it. Keep a name with
+spaces in quotes, and write the path out in full — `~` does not expand inside
+quotes:
+
+```bash
+npm run import:pnms -- --file "/Users/you/Downloads/Potential New Member List - Master Sheet.csv"
+```
+
+If it cannot find the file it says where it looked and prints the command for
+each CSV it can see in the repo, Downloads, Desktop and Documents, so you can
+copy the right one back. Nothing needs credentials until the sheet has been
+read, so a wrong path costs a second.
 
 It needs `serviceAccountKey.json` in the repo root, same as the seed script.
 
@@ -221,3 +236,5 @@ It needs `serviceAccountKey.json` in the repo root, same as the seed script.
   (3) Sell SigEp → building relationship, (5) To Receive Bid → bid extended.
 - `Date Added` becomes the PNM's created date, so the reminder job counts a
   PNM as cold from when the chapter actually met him.
+- It wants a **CSV**, not the `.xlsx`: in Google Sheets that is
+  File → Download → Comma-separated values.

@@ -2,47 +2,97 @@
 /**
  * Imports the chapter's PNM spreadsheet into Firestore.
  *
- *   node scripts/importPnms.mjs --file "PNM List.csv"            # preview
- *   node scripts/importPnms.mjs --file "PNM List.csv" --commit   # write
+ *   npm run import:pnms                                     # preview pnm-list.csv
+ *   npm run import:pnms -- --file "My Sheet.csv"            # preview
+ *   npm run import:pnms -- --file "My Sheet.csv" --commit   # write
  *
  * Dry run by default: it prints exactly what it would create, against your
  * live data, before touching anything.
  *
  * Safe to run twice — a PNM whose name already exists is skipped, so you can
  * import, fix a few leads in the app, and re-run to pick up the stragglers.
+ *
+ * The whole sheet is read and parsed before any credential is asked for, so a
+ * mistyped filename costs you a second rather than a service account key.
  */
 import { existsSync, readFileSync } from 'node:fs';
+import { relative } from 'node:path';
 import { parseArgs } from 'node:util';
-import { initializeApp, cert } from 'firebase-admin/app';
-import { getFirestore, FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { parsePnmCsv } from './lib/parsePnmCsv.mjs';
+import { CsvInputError, readCsvText, resolveCsvFile } from './lib/resolveCsvFile.mjs';
 
-const { values } = parseArgs({
-  options: {
-    file: { type: 'string' },
-    commit: { type: 'boolean', default: false },
-    'create-leads': { type: 'boolean', default: false },
-  },
-});
+const USAGE =
+  'Usage: npm run import:pnms -- --file "your-sheet.csv" [--commit] [--create-leads]';
 
-if (!values.file) {
-  console.error('Usage: node scripts/importPnms.mjs --file "your.csv" [--commit] [--create-leads]');
+/** Anything the user can fix by re-running gets the message, never a stack. */
+function fail(message) {
+  console.error(`\n${message}\n`);
   process.exit(1);
+}
+
+let values;
+let positionals;
+try {
+  ({ values, positionals } = parseArgs({
+    options: {
+      file: { type: 'string' },
+      commit: { type: 'boolean', default: false },
+      'create-leads': { type: 'boolean', default: false },
+    },
+    // A filename with spaces that lost its quotes arrives as loose words;
+    // resolveCsvFile puts them back together rather than crashing on them.
+    allowPositionals: true,
+  }));
+} catch (error) {
+  fail(`${error.message}\n\n${USAGE}`);
+}
+
+let file;
+let text;
+try {
+  const input = resolveCsvFile({ file: values.file, positionals });
+  file = input.path;
+  input.notes.forEach((note) => console.log(note));
+  text = readCsvText(file);
+} catch (error) {
+  if (error instanceof CsvInputError) fail(error.message);
+  throw error;
+}
+
+const shownPath = relative(process.cwd(), file) || file;
+
+let pnms;
+let warnings;
+try {
+  ({ pnms, warnings } = parsePnmCsv(text));
+} catch (error) {
+  fail(
+    `${shownPath} does not look like the PNM sheet: ${error.message}\n\n` +
+      'The importer needs the "Potential New Member List" tab, exported whole —\n' +
+      'title rows and all — with its First Name / Last Name / Lead columns.',
+  );
+}
+
+if (pnms.length === 0) {
+  fail(
+    `${shownPath} has the right columns but no PNM rows under them.\n\n` +
+      'Check you exported the tab with the names on it.',
+  );
 }
 
 const KEY_PATH = 'serviceAccountKey.json';
 if (!existsSync(KEY_PATH)) {
-  console.error(`Could not find ${KEY_PATH} in ${process.cwd()}
+  fail(`Could not find ${KEY_PATH} in ${process.cwd()}
 
 Firebase console -> Project settings -> Service accounts -> Generate new
 private key, save it here with that name, and delete it when you are done.`);
-  process.exit(1);
 }
+
+const { initializeApp, cert } = await import('firebase-admin/app');
+const { getFirestore, FieldValue, Timestamp } = await import('firebase-admin/firestore');
 
 initializeApp({ credential: cert(JSON.parse(readFileSync(KEY_PATH, 'utf8'))) });
 const db = getFirestore();
-
-const { pnms, warnings } = parsePnmCsv(readFileSync(values.file, 'utf8'));
 
 const [brotherSnap, existingSnap] = await Promise.all([
   db.collection('brothers').get(),
@@ -91,7 +141,7 @@ for (const pnm of pnms) {
 const creating = plan.filter((entry) => entry.action === 'create');
 const skipping = plan.filter((entry) => entry.action === 'skip');
 
-console.log(`\nParsed ${pnms.length} rows from ${values.file}\n`);
+console.log(`\nParsed ${pnms.length} rows from ${shownPath}\n`);
 for (const entry of plan) {
   const { pnm, lead, action } = entry;
   const leadLabel =
