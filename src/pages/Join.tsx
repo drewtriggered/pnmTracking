@@ -30,7 +30,20 @@ export function Join() {
         setInvite(found);
         setError(found ? null : 'No invite matches that code.');
       })
-      .catch(() => undefined);
+      .catch((e) => {
+        if (cancelled) return;
+        // Looking the code up is a courtesy — it shows whose record it is
+        // before committing. If it fails, say so but let them submit anyway:
+        // the claim itself reports a real error, and a silently dead button
+        // leaves someone stuck with nothing to act on.
+        console.error('Invite lookup failed', e);
+        setInvite(null);
+        setError(
+          (e as { code?: string }).code === 'permission-denied'
+            ? 'Could not check that code. If this project was just set up, its security rules may not be deployed yet.'
+            : 'Could not check that code. You can still try to link.',
+        );
+      });
     return () => {
       cancelled = true;
     };
@@ -90,7 +103,9 @@ export function Join() {
 
         <button
           className="btn-primary mt-5 w-full"
-          disabled={busy || code.length < 10 || !invite || Boolean(invite?.claimedByUid)}
+          // Gated only on what we know for certain: a full-length code that
+          // isn't already spent. A failed lookup must not block the claim.
+          disabled={busy || code.length < 10 || Boolean(invite?.claimedByUid)}
           onClick={() => void handleClaim()}
         >
           {busy ? 'Linking…' : 'Link my account'}
