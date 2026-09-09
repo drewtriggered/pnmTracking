@@ -7,6 +7,11 @@ import { useAuth } from '../auth/AuthProvider';
  * reported without digging through devtools.
  */
 function describeSignInError(code: string): string {
+  // Firebase folds the server's sentence into the code here, so match a prefix.
+  if (code.startsWith('auth/api-key-not-valid') || code === 'auth/invalid-api-key') {
+    return 'The Firebase API key is not valid. Check VITE_FIREBASE_API_KEY in .env for a typo or a stray character, then restart the dev server.';
+  }
+
   switch (code) {
     case 'auth/operation-not-allowed':
     case 'auth/configuration-not-found':
