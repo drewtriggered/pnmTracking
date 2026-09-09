@@ -42,12 +42,13 @@ Firebase console and your card on file.
 
 3. **Wire up config**:
    ```bash
-   cp .env.example .env                 # Project settings → Your apps → SDK setup
-   cp .firebaserc.example .firebaserc   # your project id
+   cp .env.example .env   # Project settings → Your apps → SDK setup
    npm install
    ```
    Fill in `VITE_FIREBASE_VAPID_KEY` from step 1 — without it the
-   *Turn on reminders* button can't register a device.
+   *Turn on reminders* button can't register a device. The Firebase project
+   itself is already set in `.firebaserc`; change it there if you ever point
+   this at a different project.
 
 4. **Deploy rules, functions and the app**:
    ```bash
