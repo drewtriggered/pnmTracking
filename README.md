@@ -137,9 +137,11 @@ nobody can pad their own numbers.
 
 ## Data model
 
-- `pnms/{id}` — name, phone, email, socials, major, sourceEvent, sports[],
-  hobbies[], interests[], assignedLead, status, contactLog[],
-  lastContactedDate.
+- `pnms/{id}` — name, phone, email, socials, major, year, gpa, notes,
+  sourceEvent, sports[], hobbies[], interests[], assignedLead, status,
+  contactLog[], lastContactedDate. `gpa` is free text on purpose: a chapter
+  sheet mixes real GPAs, hearsay ("2.7 HS") and a yes/no against a threshold,
+  and forcing a number throws away which of those it is.
   A `contactLog` entry requires only `date` and `brotherId`; `method`, `notes`
   and `event` are stored only when actually filled in, never as a default or a
   guess. `sourceEvent` ("met at") is carried for later event tie-in work — no
@@ -190,6 +192,32 @@ In build order:
 2. **Exec dashboard** — chapter-wide contact coverage, PNMs going cold, status
    breakdown.
 
-Deferred further out: event-specific tracking screens and CSV import for rush
-sign-in sheets (`findDuplicates` in `src/data/pnms.ts` is the shared entry
-point for it), and lead reassignment history.
+Deferred further out: event-specific tracking screens, in-app CSV upload for
+rush sign-in sheets, and lead reassignment history.
+
+## Importing an existing PNM spreadsheet
+
+`scripts/importPnms.mjs` reads the chapter's "Potential New Member List"
+export — title block, header partway down, multi-name lead cells and all.
+
+```bash
+npm run import:pnms -- --file "PNM List.csv"            # preview, writes nothing
+npm run import:pnms -- --file "PNM List.csv" --commit   # apply
+npm run import:pnms -- --file "PNM List.csv" --commit --create-leads
+```
+
+It needs `serviceAccountKey.json` in the repo root, same as the seed script.
+
+- **Dry run by default.** It prints every row it would create, against your
+  live data, before touching anything.
+- **Safe to re-run.** A PNM whose name already exists is skipped, so you can
+  import, fix a few leads in the app, and run it again for the stragglers.
+- **Leads are matched by name** against existing brothers, on either part of
+  the name, so "Koen" or "Lutz" both resolve. Unmatched leads are listed and
+  those PNMs import unassigned; `--create-leads` creates the missing brother
+  records (no invite codes — issue those from the Brothers tab).
+- The sheet's stage numbers map onto app statuses: (0) Notice to Remove →
+  dropped, (1) New Name → identified, (2) Introduce to Others → contacted,
+  (3) Sell SigEp → building relationship, (5) To Receive Bid → bid extended.
+- `Date Added` becomes the PNM's created date, so the reminder job counts a
+  PNM as cold from when the chapter actually met him.

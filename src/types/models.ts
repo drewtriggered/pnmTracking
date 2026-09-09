@@ -60,6 +60,16 @@ export interface Pnm {
   email: string;
   socials: Socials;
   major: string;
+  /** "Freshman", "Sophomore"… free text, since chapters phrase it differently. */
+  year: string;
+  /**
+   * Free text on purpose: the chapter's sheet mixes real GPAs ("2.6"),
+   * hearsay ("2.7 HS") and a yes/no against a threshold. Forcing a number
+   * would throw away which of those it is.
+   */
+  gpa: string;
+  /** Standing notes about the PNM, distinct from any one contact's notes. */
+  notes: string;
   sports: string[];
   hobbies: string[];
   interests: string[];
