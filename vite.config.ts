@@ -27,6 +27,9 @@ export default defineConfig({
         // Firestore/Auth traffic must never be served from the SW cache.
         navigateFallbackDenylist: [/^\/__/],
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        // The other service worker is not an app asset: precaching it would
+        // pin a copy of the push handler that outlives its own deploy.
+        globIgnores: ['**/firebase-messaging-sw.js'],
       },
     }),
   ],

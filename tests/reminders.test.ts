@@ -6,7 +6,9 @@ import {
   daysBetween,
   hourInZone,
   pickVariant,
+  pushMessageFor,
   renderMessage,
+  tapTarget,
   type PnmSnapshot,
   type ReminderSettings,
 } from '../functions/src/logic';
@@ -230,5 +232,54 @@ describe('message rendering and scheduling helpers', () => {
   it('counts whole days only', () => {
     expect(daysBetween(days(1) - 1000, NOW)).toBe(1);
     expect(daysBetween(NOW - 1000, NOW)).toBe(0);
+  });
+});
+
+describe('the message handed to FCM', () => {
+  const message = (appUrl: string) =>
+    pushMessageFor({
+      title: 'PNMs going cold',
+      body: '3 need a check-in.',
+      kind: 'lead',
+      variantId: 'v1',
+      appUrl,
+    });
+
+  it('carries an icon, or the reminder wears the browser\'s logo', () => {
+    const webpush = message('https://pnm.web.app').webpush.notification;
+    expect(webpush.icon).toBe('/icon-192.png');
+    expect(webpush.badge).toBe('/icon-192.png');
+    expect(webpush.title).toBe('PNMs going cold');
+    expect(webpush.body).toBe('3 need a check-in.');
+  });
+
+  it('tags by digest kind so today replaces yesterday rather than stacking', () => {
+    expect(message('https://pnm.web.app').webpush.notification.tag).toBe('pnm-lead');
+  });
+
+  it('sends the tap target when it is a link FCM accepts', () => {
+    expect(message('https://pnm.web.app').webpush.fcmOptions).toEqual({
+      link: 'https://pnm.web.app',
+    });
+  });
+
+  it('drops a link FCM would reject rather than lose the notification with it', () => {
+    // FCM fails the whole send on a bad link, so a missing scheme has to cost
+    // the tap target and nothing more.
+    expect(message('pnm.web.app').webpush.fcmOptions).toBeUndefined();
+    expect(message('http://pnm.web.app').webpush.fcmOptions).toBeUndefined();
+    expect(message('').webpush.fcmOptions).toBeUndefined();
+    expect(message('pnm.web.app').notification.title).toBe('PNMs going cold');
+  });
+
+  it('agrees with the App URL check the settings screen shows', () => {
+    expect(tapTarget('https://pnm.web.app')).toBe('https://pnm.web.app');
+    expect(tapTarget('  https://pnm.web.app  ')).toBe('https://pnm.web.app');
+    expect(tapTarget('your-app.web.app')).toBeNull();
+    expect(tapTarget('https://')).toBeNull();
+  });
+
+  it('keeps the data payload the send record and the client read', () => {
+    expect(message('https://pnm.web.app').data).toEqual({ kind: 'lead', variantId: 'v1' });
   });
 });

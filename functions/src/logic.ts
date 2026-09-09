@@ -57,6 +57,73 @@ export const DEFAULT_REMINDER_SETTINGS: ReminderSettings = {
   experiment: { id: 'v1', enabled: false, variants: [DEFAULT_VARIANT] },
 };
 
+/** Shipped in public/ and used as both the notification icon and its badge. */
+export const NOTIFICATION_ICON = '/icon-192.png';
+
+/**
+ * FCM rejects a whole send when `webpush.fcmOptions.link` is not an absolute
+ * https URL — so an App URL saved as "pnmtracking.web.app" doesn't open the
+ * wrong page, it stops every notification from being delivered at all. Drop a
+ * link FCM won't take rather than lose the reminder with it.
+ */
+export function tapTarget(appUrl: string): string | null {
+  const trimmed = (appUrl ?? '').trim();
+  return /^https:\/\/\S+$/i.test(trimmed) ? trimmed : null;
+}
+
+export interface PushMessage {
+  notification: { title: string; body: string };
+  data: { [key: string]: string };
+  webpush: {
+    notification: {
+      title: string;
+      body: string;
+      icon: string;
+      badge: string;
+      tag: string;
+    };
+    fcmOptions?: { link: string };
+  };
+}
+
+/**
+ * One reminder, as FCM wants it.
+ *
+ * The webpush block is not decoration: the browser shows the notification from
+ * it, so without an explicit icon a reminder arrives wearing the browser's own
+ * logo. `tag` keyed to the digest kind means today's nudge replaces yesterday's
+ * unread one instead of stacking up a column of them on the lock screen.
+ */
+export function pushMessageFor({
+  title,
+  body,
+  kind,
+  variantId,
+  appUrl,
+}: {
+  title: string;
+  body: string;
+  kind: string;
+  variantId: string;
+  appUrl: string;
+}): PushMessage {
+  const link = tapTarget(appUrl);
+  return {
+    notification: { title, body },
+    data: { kind, variantId },
+    webpush: {
+      notification: {
+        title,
+        body,
+        icon: NOTIFICATION_ICON,
+        badge: NOTIFICATION_ICON,
+        tag: `pnm-${kind}`,
+      },
+      ...(link ? { fcmOptions: { link } } : {}),
+    },
+  };
+}
+
 /** Statuses that take a PNM out of the pipeline — no point nudging about them. */
 export const CLOSED_STATUSES = ['pledged', 'dropped'];
 

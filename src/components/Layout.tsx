@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
+import { ForegroundNotice } from './ForegroundNotice';
 
 function tab({ isActive }: { isActive: boolean }) {
   return `flex-1 border-b-2 px-3 py-3 text-center text-sm font-medium ${
@@ -40,6 +41,7 @@ export function Layout() {
         </nav>
       </header>
       <main className="mx-auto max-w-3xl px-4 py-4">
+        <ForegroundNotice />
         <Outlet />
       </main>
     </div>

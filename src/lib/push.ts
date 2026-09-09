@@ -1,4 +1,4 @@
-import { getMessaging, getToken, isSupported, onMessage } from 'firebase/messaging';
+import { deleteToken, getMessaging, getToken, isSupported, onMessage } from 'firebase/messaging';
 import { arrayRemove, arrayUnion, doc, updateDoc } from 'firebase/firestore';
 import { db, firebaseApp } from './firebase';
 
@@ -30,6 +30,17 @@ export async function pushState(): Promise<PushState> {
   return 'prompt';
 }
 
+/**
+ * FCM's own scope, kept deliberately.
+ *
+ * A service worker registration is keyed by scope, so registering the
+ * messaging worker at the default "/" replaced the PWA's sw.js — and the PWA's
+ * own registration on the next load replaced it straight back, leaving pushes
+ * arriving at a worker with no handler for them. This is the scope the
+ * Firebase SDK uses when it registers the worker itself, so nothing collides.
+ */
+const FCM_SCOPE = '/firebase-cloud-messaging-push-scope';
+
 /** The background handler needs the config too; it reads it off the query string. */
 function messagingSwUrl(): string {
   const params = new URLSearchParams({
@@ -39,6 +50,17 @@ function messagingSwUrl(): string {
     appId: import.meta.env.VITE_FIREBASE_APP_ID,
   });
   return `/firebase-messaging-sw.js?${params.toString()}`;
+}
+
+/**
+ * The one registration every token in this module is read from.
+ *
+ * Letting the SDK fall back to its own default would register the worker
+ * without the query string — a worker with no Firebase config, and so no
+ * background handler at all.
+ */
+function messagingWorker(): Promise<ServiceWorkerRegistration> {
+  return navigator.serviceWorker.register(messagingSwUrl(), { scope: FCM_SCOPE });
 }
 
 /**
@@ -56,7 +78,7 @@ export async function enablePush(brotherId: string): Promise<string> {
     throw new Error('Notifications are blocked for this site.');
   }
 
-  const registration = await navigator.serviceWorker.register(messagingSwUrl());
+  const registration = await messagingWorker();
   const token = await getToken(getMessaging(firebaseApp), {
     vapidKey,
     serviceWorkerRegistration: registration,
@@ -67,12 +89,28 @@ export async function enablePush(brotherId: string): Promise<string> {
   return token;
 }
 
+/**
+ * Drops this device: unsubscribes it from push, then forgets the token.
+ *
+ * Reading the token back from the same registration matters — from any other
+ * one it is a different token, and removing that from the array would leave
+ * this device's real token in place, still being pushed to.
+ */
 export async function disablePush(brotherId: string): Promise<void> {
-  const token = await getToken(getMessaging(firebaseApp), {
-    vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,
-  }).catch(() => null);
+  const messaging = getMessaging(firebaseApp);
+  const registration = await messagingWorker().catch(() => null);
+  const token = registration
+    ? await getToken(messaging, {
+        vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,
+        serviceWorkerRegistration: registration,
+      }).catch(() => null)
+    : null;
+
   if (token) {
     await updateDoc(doc(db, 'brothers', brotherId), { fcmTokens: arrayRemove(token) });
+    // Best effort: the record is already clean, and a token the browser keeps
+    // is harmless once the server has stopped addressing it.
+    await deleteToken(messaging).catch(() => undefined);
   }
 }
 
