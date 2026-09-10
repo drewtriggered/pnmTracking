@@ -91,8 +91,8 @@ export function Brothers() {
   return (
     <div className="space-y-4">
       <form className="card space-y-3 p-4" onSubmit={(e) => void addBrother(e)}>
-        <h2 className="text-lg font-semibold">Add a brother</h2>
-        <p className="text-sm text-gray-500">
+        <h2 className="font-display text-xl font-semibold uppercase tracking-[0.04em] text-ink">Add a brother</h2>
+        <p className="text-sm text-ink-faint">
           Creates their record and a one-time invite code you can send them.
         </p>
         <div className="grid gap-3 sm:grid-cols-3">
@@ -118,7 +118,7 @@ export function Brothers() {
             <option value="exec">exec</option>
           </select>
         </div>
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <p className="text-sm text-feedback-error">{error}</p>}
         <button className="btn-primary w-full" disabled={busy || !name.trim()} type="submit">
           {busy ? 'Adding…' : 'Add brother + generate code'}
         </button>
@@ -126,15 +126,15 @@ export function Brothers() {
 
       {openInvites.length > 0 && (
         <div className="card">
-          <h3 className="border-b border-gray-100 px-4 py-3 font-medium">
+          <h3 className="border-b border-ink/10 px-4 py-3 font-display text-sm font-semibold uppercase tracking-[0.14em] text-ink">
             Unclaimed invites ({openInvites.length})
           </h3>
-          <ul className="divide-y divide-gray-100">
+          <ul className="divide-y divide-ink/10">
             {openInvites.map((invite) => (
               <li key={invite.code} className="flex items-center justify-between gap-3 px-4 py-3">
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium">{invite.brotherName}</p>
-                  <p className="font-mono text-xs tracking-widest text-gray-600">{invite.code}</p>
+                  <p className="font-mono text-xs tracking-widest text-ink-soft">{invite.code}</p>
                 </div>
                 <div className="flex shrink-0 gap-2">
                   <button className="btn-secondary" onClick={() => void share(invite.code)}>
@@ -151,22 +151,22 @@ export function Brothers() {
       )}
 
       <div className="card">
-        <h3 className="border-b border-gray-100 px-4 py-3 font-medium">
+        <h3 className="border-b border-ink/10 px-4 py-3 font-display text-sm font-semibold uppercase tracking-[0.14em] text-ink">
           Roster ({brothers.length})
         </h3>
-        <ul className="divide-y divide-gray-100">
+        <ul className="divide-y divide-ink/10">
           {brothers.map((brother) => (
             <li key={brother.id} className="flex items-center justify-between gap-3 px-4 py-3">
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium">{brother.name}</p>
-                <p className="truncate whitespace-nowrap text-xs text-gray-500">
+                <p className="truncate whitespace-nowrap text-xs text-ink-faint">
                   {brother.uid ? 'Account linked' : 'Not signed in yet'} ·{' '}
                   {brother.assignedPnmIds.length} PNMs
                 </p>
-                <label className="mt-1 flex items-center gap-1.5 text-xs text-gray-600">
+                <label className="mt-1 flex items-center gap-1.5 text-xs text-ink-soft">
                   <input
                     type="checkbox"
-                    className="h-3.5 w-3.5 rounded border-gray-300"
+                    className="h-3.5 w-3.5 rounded border-ink/30"
                     checked={brother.reminderAdmin === true}
                     onChange={(e) => void setReminderAdmin(brother.id, e.target.checked)}
                   />

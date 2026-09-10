@@ -7,8 +7,17 @@
     -webkit-text-size-adjust: 100%;
   }
   body {
-    @apply bg-gray-50 text-gray-900 antialiased;
-    /* Respect the notch when installed to the home screen. */
+    /* The board: warm near-black enamel — a low sheen off the top edge and a
+       darker sink toward the bottom, so it reads as a surface, not a fill. */
+    @apply bg-board text-chalk antialiased;
+    /* Enamel: one soft light source off the top edge, and a gentle vignette
+       from that same origin so the panel edges sink — both radial from 50% 0%,
+       so nothing draws a horizontal line across a long scroll. */
+    background-image:
+      radial-gradient(150% 80% at 50% -30%, rgba(255, 255, 255, 0.05), transparent 55%),
+      radial-gradient(135% 100% at 50% -5%, transparent 62%, rgba(0, 0, 0, 0.24));
+    background-attachment: fixed;
+    background-repeat: no-repeat;
     padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
   }
@@ -18,30 +27,239 @@
   textarea {
     font-size: 16px;
   }
+  ::selection {
+    background: theme('colors.orange.DEFAULT');
+    color: #fff;
+  }
+  :focus-visible {
+    outline: 2px solid theme('colors.orange.DEFAULT');
+    outline-offset: 2px;
+  }
+  input,
+  textarea {
+    caret-color: theme('colors.orange.DEFAULT');
+  }
 }
 
 @layer components {
-  .field {
-    @apply w-full rounded-lg border border-gray-300 bg-white px-3 py-2 shadow-sm
-           focus:border-ink focus:outline-none focus:ring-1 focus:ring-ink;
+  /* --- Surfaces ----------------------------------------------------------- */
+
+  /* A name plate / pulled plate: bone stock lifted off the board. */
+  .card {
+    @apply relative bg-bone text-ink shadow-plate;
+    background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.35), rgba(0, 0, 0, 0.02));
   }
-  .label {
-    @apply mb-1 block text-sm font-medium text-gray-700;
+
+  /* A plate on the board — a card with the status-tape gutter on its left
+     edge. Aging is driven by --age (0 fresh → 1 cold), set per plate. */
+  .plate {
+    @apply card block pl-5 pr-3 py-3 transition-transform;
+    --age: 0;
+    background-color: color-mix(
+      in srgb,
+      theme('colors.bone.DEFAULT'),
+      #E0CFA8 calc(var(--age) * 62%)
+    );
   }
+  .plate:hover {
+    transform: translateY(-1px);
+  }
+  .plate:active {
+    @apply shadow-plate-flat;
+    transform: translateY(0);
+  }
+  /* The curling corner of an aging plate — a shadow that deepens with --age. */
+  .plate::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 26px;
+    height: 26px;
+    pointer-events: none;
+    opacity: var(--age);
+    background: linear-gradient(315deg, rgba(0, 0, 0, 0.28) 0%, rgba(0, 0, 0, 0) 55%);
+  }
+
+  /* --- Status tape ------------------------------------------------------- */
+
+  /* A torn strip of colored tape applied down the plate's left edge — not a
+     border. Overhangs the plate top and bottom, sits at a slight angle. The
+     stage hue arrives as an inline background-color from STAGE_META; the
+     gradient here is the tape's own sheen and grain over it. */
+  .tape {
+    position: absolute;
+    left: 5px;
+    top: -3px;
+    bottom: -3px;
+    width: 10px;
+    transform: rotate(-0.6deg);
+    box-shadow: theme('boxShadow.tape');
+    background-image: repeating-linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.16) 0,
+      rgba(255, 255, 255, 0.16) 2px,
+      rgba(0, 0, 0, 0.09) 2px,
+      rgba(0, 0, 0, 0.09) 4px
+    );
+    -webkit-mask-image: linear-gradient(
+      180deg,
+      transparent 0,
+      #000 3px,
+      #000 calc(100% - 6px),
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      180deg,
+      transparent 0,
+      #000 3px,
+      #000 calc(100% - 6px),
+      transparent 100%
+    );
+  }
+
+  /* Inline tape tag — the stage word on a scrap of tape, for the detail
+     header and anywhere the strip form doesn't fit. */
+  .tape-tag {
+    @apply inline-flex items-center gap-1.5 px-2 py-0.5 font-display text-xs font-semibold uppercase tracking-[0.08em] text-white;
+    box-shadow: theme('boxShadow.tape');
+  }
+
+  /* --- Board structure ------------------------------------------------- */
+
+  /* A chalk section rule on the board — a dragged stick of chalk, not a
+     drafting line: the stroke is built from uneven dashes and skips. */
+  .section-head {
+    @apply flex items-baseline gap-3 pb-2 font-display text-sm font-semibold uppercase tracking-[0.16em] text-chalk;
+    position: relative;
+  }
+  .section-head::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 3px;
+    background: rgba(233, 226, 210, 0.5);
+    -webkit-mask-image: repeating-linear-gradient(
+      90deg,
+      #000 0,
+      #000 7px,
+      rgba(0, 0, 0, 0.55) 7px,
+      rgba(0, 0, 0, 0.55) 11px,
+      #000 11px,
+      #000 19px,
+      transparent 19px,
+      transparent 21px
+    );
+    mask-image: repeating-linear-gradient(
+      90deg,
+      #000 0,
+      #000 7px,
+      rgba(0, 0, 0, 0.55) 7px,
+      rgba(0, 0, 0, 0.55) 11px,
+      #000 11px,
+      #000 19px,
+      transparent 19px,
+      transparent 21px
+    );
+  }
+  .count-chip {
+    @apply font-display text-xs font-semibold tabular-nums text-chalk-dim;
+  }
+
+  /* --- Controls -------------------------------------------------------- */
+
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2
-           text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-2 rounded-sm px-4 py-2.5
+           font-display text-base font-semibold uppercase tracking-[0.08em]
+           transition-colors disabled:cursor-not-allowed disabled:opacity-50;
   }
   .btn-primary {
-    @apply btn bg-ink text-white hover:bg-gray-800;
+    @apply btn bg-orange text-white hover:bg-orange-bright;
   }
   .btn-secondary {
-    @apply btn border border-gray-300 bg-white text-gray-700 hover:bg-gray-50;
+    @apply btn border border-ink/25 bg-bone-bright text-ink hover:bg-bone;
   }
   .btn-danger {
-    @apply btn border border-red-200 bg-white text-red-700 hover:bg-red-50;
+    @apply btn border border-sigep-red/40 bg-bone-bright text-sigep-red hover:bg-sigep-red/10;
   }
-  .card {
-    @apply rounded-xl border border-gray-200 bg-white shadow-sm;
+  /* On the dark board — the masthead sign-out, and dark-ground secondaries. */
+  .btn-ghost-dark {
+    @apply btn border border-chalk/25 bg-transparent text-chalk hover:bg-white/10;
+  }
+
+  .field {
+    @apply w-full min-w-0 rounded-sm border border-ink/30 bg-bone-bright px-3 py-2 text-ink
+           placeholder:text-ink-faint
+           focus:border-orange focus:outline-none focus:ring-1 focus:ring-orange;
+  }
+  /* A <select> won't shrink below its longest option without this, which
+     overflows the one-column layout on a phone. */
+  select.field {
+    text-overflow: ellipsis;
+  }
+  .label {
+    @apply mb-1 block font-display text-xs font-semibold uppercase tracking-[0.12em] text-ink-soft;
+  }
+
+  /* Filter chips — little index tags clipped to the board. */
+  .tag {
+    @apply inline-flex items-center rounded-sm border border-ink/25 bg-bone-bright
+           px-2.5 py-1 font-display text-xs font-semibold uppercase tracking-[0.08em]
+           text-ink-soft transition-colors hover:bg-bone;
+  }
+  .tag-on {
+    @apply border-orange bg-orange text-white hover:bg-orange;
+  }
+
+  /* --- Marks -------------------------------------------------------------- */
+
+  /* The grease-pencil date stamp — waxy, pressed on at a slight angle. */
+  .stamp {
+    @apply inline-block font-display text-xs font-semibold uppercase tracking-[0.1em] tabular-nums;
+    transform: rotate(-1.5deg);
+    text-shadow: 0.5px 0.5px 0 rgba(0, 0, 0, 0.18);
+  }
+
+  /* The one authored moment: a fresh contact stamped onto the record. The
+     press-past-and-settle lives in the keyframe scale; the timing function
+     just decelerates smoothly (ease-out-quint), no elastic overshoot. */
+  .stamp-in {
+    animation: stamp-in 400ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  /* A read-only attribute tag on the detail view (sports / hobbies). */
+  .attr {
+    @apply inline-flex items-center rounded-sm bg-ink/[0.08] px-2 py-0.5 text-xs text-ink-soft;
+  }
+
+  /* Inline feedback strips. */
+  .note-ok {
+    @apply rounded-sm bg-stage-pledged/[0.12] px-3 py-2 text-sm text-stage-pledged;
+  }
+  .note-warn {
+    @apply rounded-sm border border-feedback-warning/[0.45] bg-feedback-warning/10 px-3 py-2 text-sm text-[#7c5214];
+  }
+}
+
+@keyframes stamp-in {
+  0% {
+    opacity: 0;
+    transform: rotate(-1.5deg) scale(1.55);
+  }
+  55% {
+    opacity: 1;
+    transform: rotate(-1.5deg) scale(0.92);
+  }
+  100% {
+    opacity: 1;
+    transform: rotate(-1.5deg) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stamp-in {
+    animation-duration: 1ms;
   }
 }

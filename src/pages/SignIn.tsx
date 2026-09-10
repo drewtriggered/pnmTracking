@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../auth/AuthProvider';
+import { Crest } from '../components/Crest';
 
 /**
  * Turns a Firebase auth code into something the person in front of the screen
@@ -58,16 +59,29 @@ export function SignIn() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4">
+    <div className="flex min-h-screen flex-col items-center justify-center px-4">
+      <div className="mb-5 flex items-center gap-3 text-chalk">
+        <Crest className="h-9 w-9 text-sigep-gold" />
+        <div className="leading-none">
+          <p className="font-display text-xl font-semibold uppercase tracking-[0.14em]">
+            SigEp <span className="text-chalk-dim">·</span> Indiana Tech
+          </p>
+          <p className="mt-1 font-display text-2xs font-semibold uppercase tracking-[0.24em] text-orange">
+            Nobody goes cold
+          </p>
+        </div>
+      </div>
       <div className="card w-full max-w-sm p-6 text-center">
-        <h1 className="text-xl font-semibold">PNM Tracking</h1>
-        <p className="mt-2 text-sm text-gray-600">
+        <h1 className="font-display text-2xl font-semibold uppercase tracking-[0.03em] text-ink">
+          Recruitment board
+        </h1>
+        <p className="mt-2 text-sm text-ink-soft">
           Sign in with Google, then enter the invite code exec sent you.
         </p>
         <button className="btn-primary mt-6 w-full" disabled={busy} onClick={() => void handleSignIn()}>
           {busy ? 'Opening Google…' : 'Continue with Google'}
         </button>
-        {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+        {error && <p className="mt-3 text-sm text-feedback-error">{error}</p>}
       </div>
     </div>
   );

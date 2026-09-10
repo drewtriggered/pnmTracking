@@ -76,7 +76,7 @@ export function QuickLogCard({ pnm, brotherId }: { pnm: Pnm; brotherId: string }
   return (
     <div className="card p-4">
       <button
-        className="btn-primary w-full py-3 text-base"
+        className="btn-primary w-full py-3.5 text-lg"
         disabled={busy}
         onClick={() => void handleLog()}
       >
@@ -84,12 +84,15 @@ export function QuickLogCard({ pnm, brotherId }: { pnm: Pnm; brotherId: string }
       </button>
 
       {loggedId && !showDetails && (
-        <div className="mt-3 flex items-center justify-between gap-2 rounded-lg bg-green-50 px-3 py-2">
-          <span className="text-sm text-green-800">
-            {detailsSaved ? 'Details saved.' : 'Logged.'}
+        <div className="mt-3 flex items-center justify-between gap-2 note-ok">
+          <span
+            key={detailsSaved ? 'saved' : loggedId}
+            className="stamp stamp-in origin-left text-sm text-stage-pledged"
+          >
+            {detailsSaved ? 'Details saved' : 'Logged · today'}
           </span>
           <button
-            className="text-sm font-medium text-green-900 underline"
+            className="font-display text-xs font-semibold uppercase tracking-[0.1em] text-stage-pledged underline"
             onClick={() => setShowDetails(true)}
           >
             {detailsSaved ? 'Edit details' : 'Add details'}
@@ -99,7 +102,7 @@ export function QuickLogCard({ pnm, brotherId }: { pnm: Pnm; brotherId: string }
 
       {!loggedId && !showDetails && (
         <button
-          className="mt-3 w-full text-sm text-gray-600 underline"
+          className="mt-3 w-full font-display text-xs font-semibold uppercase tracking-[0.1em] text-ink-faint underline"
           onClick={() => setShowDetails(true)}
         >
           Add details (optional)
@@ -107,8 +110,8 @@ export function QuickLogCard({ pnm, brotherId }: { pnm: Pnm; brotherId: string }
       )}
 
       {showDetails && (
-        <div className="mt-4 space-y-3 border-t border-gray-100 pt-4">
-          <p className="text-xs text-gray-500">
+        <div className="mt-4 space-y-3 border-t border-ink/10 pt-4">
+          <p className="text-xs text-ink-faint">
             {attaching
               ? 'Adding to the contact you just logged.'
               : 'All optional — the button works without any of it.'}
@@ -124,11 +127,7 @@ export function QuickLogCard({ pnm, brotherId }: { pnm: Pnm; brotherId: string }
                     key={method}
                     type="button"
                     aria-pressed={selected}
-                    className={`rounded-full px-3 py-1 text-sm ring-1 ring-inset ${
-                      selected
-                        ? 'bg-ink text-white ring-ink'
-                        : 'bg-white text-gray-700 ring-gray-300 hover:bg-gray-50'
-                    }`}
+                    className={`tag ${selected ? 'tag-on' : ''}`}
                     onClick={() =>
                       setDetails({
                         ...details,
@@ -186,7 +185,7 @@ export function QuickLogCard({ pnm, brotherId }: { pnm: Pnm; brotherId: string }
                 onChange={(e) => setDate(e.target.value)}
               />
               {backdated && (
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-ink-faint">
                   Logging this for an earlier day.
                 </p>
               )}
@@ -217,7 +216,7 @@ export function QuickLogCard({ pnm, brotherId }: { pnm: Pnm; brotherId: string }
         </div>
       )}
 
-      {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+      {error && <p className="mt-3 text-sm text-feedback-error">{error}</p>}
     </div>
   );
 }

@@ -1,20 +1,20 @@
 import type { PnmStatus } from '../types/models';
+import { STAGE_LABEL, STAGE_META } from '../lib/stages';
 
-const STYLES: Record<PnmStatus, string> = {
-  identified: 'bg-gray-100 text-gray-700 ring-gray-200',
-  contacted: 'bg-blue-50 text-blue-700 ring-blue-200',
-  'building relationship': 'bg-indigo-50 text-indigo-700 ring-indigo-200',
-  'bid extended': 'bg-amber-50 text-amber-800 ring-amber-200',
-  pledged: 'bg-green-50 text-green-700 ring-green-200',
-  dropped: 'bg-red-50 text-red-700 ring-red-200',
-};
-
+/**
+ * The pipeline stage on a scrap of colored tape, glyph included so it reads
+ * without relying on the hue. Used on the detail header and anywhere the
+ * plate's edge strip doesn't fit.
+ */
 export function StatusBadge({ status }: { status: PnmStatus }) {
+  const meta = STAGE_META[status];
   return (
     <span
-      className={`inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${STYLES[status]}`}
+      className="tape-tag shrink-0"
+      style={{ backgroundColor: meta.tapeColor }}
     >
-      {status}
+      <meta.Glyph className="h-3 w-3" />
+      {STAGE_LABEL[status]}
     </span>
   );
 }

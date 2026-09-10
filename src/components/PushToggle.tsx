@@ -46,21 +46,21 @@ export function PushToggle({ brotherId, enabled }: { brotherId: string; enabled:
       <h3 className="font-medium">Reminders on this device</h3>
 
       {state === 'needs-install' && (
-        <p className="mt-2 text-sm text-gray-600">
+        <p className="mt-2 text-sm text-ink-soft">
           On iPhone, add this app to your home screen first (Share → Add to Home Screen),
           then open it from there to turn on notifications.
         </p>
       )}
 
       {state === 'unsupported' && (
-        <p className="mt-2 text-sm text-gray-600">
+        <p className="mt-2 text-sm text-ink-soft">
           This browser can't do push notifications. Try Chrome, or install the app to your
           home screen.
         </p>
       )}
 
       {state === 'denied' && (
-        <p className="mt-2 text-sm text-gray-600">
+        <p className="mt-2 text-sm text-ink-soft">
           Notifications are blocked for this site. Turn them back on in your browser's site
           settings, then reload.
         </p>
@@ -68,7 +68,7 @@ export function PushToggle({ brotherId, enabled }: { brotherId: string; enabled:
 
       {(state === 'prompt' || state === 'granted') && (
         <>
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm text-ink-soft">
             {enabled
               ? 'This device is set up for reminders.'
               : 'Get a nudge when one of your PNMs goes quiet.'}
@@ -86,7 +86,7 @@ export function PushToggle({ brotherId, enabled }: { brotherId: string; enabled:
         </>
       )}
 
-      {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+      {error && <p className="mt-3 text-sm text-feedback-error">{error}</p>}
     </div>
   );
 }

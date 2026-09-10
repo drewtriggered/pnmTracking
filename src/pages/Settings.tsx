@@ -21,7 +21,7 @@ function VariantEditor({
   canRemove: boolean;
 }) {
   return (
-    <div className="rounded-lg border border-gray-200 p-3">
+    <div className="rounded-lg border border-ink/15 p-3">
       <div className="flex items-center gap-2">
         <input
           className="field flex-1"
@@ -75,7 +75,7 @@ function Results({ sends }: { sends: ReminderSend[] }) {
 
   if (rows.length === 0) {
     return (
-      <p className="text-sm text-gray-500">
+      <p className="text-sm text-ink-faint">
         No reminders sent yet. Results appear here once the daily job has run.
       </p>
     );
@@ -85,7 +85,7 @@ function Results({ sends }: { sends: ReminderSend[] }) {
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
-          <tr className="text-left text-xs uppercase tracking-wide text-gray-500">
+          <tr className="text-left text-xs uppercase tracking-wide text-ink-faint">
             <th className="py-1">Variant</th>
             <th className="py-1">Sent</th>
             <th className="py-1">Acted</th>
@@ -94,7 +94,7 @@ function Results({ sends }: { sends: ReminderSend[] }) {
         </thead>
         <tbody>
           {rows.map(([variantId, row]) => (
-            <tr key={variantId} className="border-t border-gray-100">
+            <tr key={variantId} className="border-t border-ink/10">
               <td className="py-1.5 font-medium">{variantId}</td>
               <td className="py-1.5">{row.sent}</td>
               <td className="py-1.5">{row.acted}</td>
@@ -105,7 +105,7 @@ function Results({ sends }: { sends: ReminderSend[] }) {
           ))}
         </tbody>
       </table>
-      <p className="mt-2 text-xs text-gray-500">
+      <p className="mt-2 text-xs text-ink-faint">
         "Acted" means the brother logged a contact for one of the PNMs in that reminder,
         within two weeks of it being sent.
       </p>
@@ -188,8 +188,8 @@ export function Settings() {
 
       {!isReminderAdmin ? (
         <div className="card p-4">
-          <h3 className="font-medium">Reminder schedule</h3>
-          <p className="mt-2 text-sm text-gray-600">
+          <h3 className="font-display text-sm font-semibold uppercase tracking-[0.14em] text-ink">Reminder schedule</h3>
+          <p className="mt-2 text-sm text-ink-soft">
             You'll hear about a PNM after {live.coldAfterDays} days without contact.
             Exec is told after {live.escalateAfterDays}.
           </p>
@@ -198,11 +198,11 @@ export function Settings() {
         <>
           <div className="card space-y-3 p-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-medium">Reminder rules</h3>
+              <h3 className="font-display text-sm font-semibold uppercase tracking-[0.14em] text-ink">Reminder rules</h3>
               <label className="flex items-center gap-2 text-sm">
                 <input
                   type="checkbox"
-                  className="h-4 w-4 rounded border-gray-300"
+                  className="h-4 w-4 rounded border-ink/30"
                   checked={draft.enabled}
                   onChange={(e) => edit({ enabled: e.target.checked })}
                 />
@@ -238,7 +238,7 @@ export function Settings() {
             <label className="flex items-center gap-2 text-sm">
               <input
                 type="checkbox"
-                className="h-4 w-4 rounded border-gray-300"
+                className="h-4 w-4 rounded border-ink/30"
                 checked={draft.escalationEnabled}
                 onChange={(e) => edit({ escalationEnabled: e.target.checked })}
               />
@@ -283,11 +283,11 @@ export function Settings() {
 
           <div className="card space-y-3 p-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-medium">Notification experiment</h3>
+              <h3 className="font-display text-sm font-semibold uppercase tracking-[0.14em] text-ink">Notification experiment</h3>
               <label className="flex items-center gap-2 text-sm">
                 <input
                   type="checkbox"
-                  className="h-4 w-4 rounded border-gray-300"
+                  className="h-4 w-4 rounded border-ink/30"
                   checked={draft.experiment.enabled}
                   onChange={(e) =>
                     edit({ experiment: { ...draft.experiment, enabled: e.target.checked } })
@@ -296,7 +296,7 @@ export function Settings() {
                 Running
               </label>
             </div>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-ink-soft">
               Each brother is assigned one variant and keeps it, so you're measuring the copy
               rather than noise. Change the experiment ID to reshuffle everyone and start a
               clean run.
@@ -348,12 +348,12 @@ export function Settings() {
           </div>
 
           <div className="card p-4">
-            <h3 className="mb-3 font-medium">Results</h3>
+            <h3 className="mb-3 font-display text-sm font-semibold uppercase tracking-[0.14em] text-ink">Results</h3>
             <Results sends={sends} />
           </div>
 
-          {notice && <p className="text-sm text-green-700">{notice}</p>}
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {notice && <p className="text-sm text-stage-pledged">{notice}</p>}
+          {error && <p className="text-sm text-feedback-error">{error}</p>}
 
           <div className="flex gap-2">
             <button className="btn-secondary flex-1" disabled={busy} onClick={() => void sendTest()}>

@@ -29,13 +29,21 @@ export function daysSince(value: Timestamp | null | undefined): number | null {
   return Math.floor(ms / 86_400_000);
 }
 
-/** "3 days ago" / "Today" / "Never contacted" for the list and detail views. */
+/** "3 days ago" / "Today" / "Never contacted" for the detail view prose. */
 export function contactAge(value: Timestamp | null | undefined): string {
   const days = daysSince(value);
   if (days === null) return 'Never contacted';
   if (days <= 0) return 'Today';
   if (days === 1) return 'Yesterday';
   return `${days} days ago`;
+}
+
+/** Compact grease-pencil stamp for a plate: "TODAY" / "3D" / "NEVER". */
+export function stampAge(value: Timestamp | null | undefined): string {
+  const days = daysSince(value);
+  if (days === null) return 'NEVER';
+  if (days <= 0) return 'TODAY';
+  return `${days}D`;
 }
 
 /** Digits-only phone, used for duplicate detection and tel: links. */
