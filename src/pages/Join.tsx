@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
+import { Crest } from '../components/Crest';
 import { claimInvite, InviteError, peekInvite } from '../data/invites';
 import { normalizeInviteCode } from '../lib/codes';
 import type { Invite } from '../types/models';
@@ -68,10 +69,11 @@ export function Join() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4">
+    <div className="flex min-h-screen flex-col items-center justify-center px-4">
+      <Crest className="mb-4 h-9 w-9 text-sigep-gold" />
       <div className="card w-full max-w-sm p-6">
-        <h1 className="text-xl font-semibold">Enter your invite code</h1>
-        <p className="mt-2 text-sm text-gray-600">
+        <h1 className="font-display text-2xl font-semibold uppercase tracking-[0.03em] text-ink">Enter your invite code</h1>
+        <p className="mt-2 text-sm text-ink-soft">
           Signed in as {user?.email}. This code links your account to your brother record — it
           only works once.
         </p>
@@ -90,16 +92,14 @@ export function Join() {
         />
 
         {invite && !invite.claimedByUid && (
-          <p className="mt-3 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-800">
+          <p className="note-ok mt-3">
             This code is for <strong>{invite.brotherName}</strong>.
           </p>
         )}
         {invite?.claimedByUid && (
-          <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
-            This code has already been used.
-          </p>
+          <p className="note-warn mt-3">This code has already been used.</p>
         )}
-        {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+        {error && <p className="mt-3 text-sm text-feedback-error">{error}</p>}
 
         <button
           className="btn-primary mt-5 w-full"

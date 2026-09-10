@@ -8,6 +8,7 @@ import { QuickLogCard } from '../components/QuickLogCard';
 import { Spinner } from '../components/Spinner';
 import { StatusBadge } from '../components/StatusBadge';
 import { formatDate, formatPhone, normalizePhone } from '../lib/format';
+import { STAGE_LABEL } from '../lib/stages';
 import { PNM_STATUSES, type Brother, type Pnm, type PnmStatus } from '../types/models';
 
 export function PnmDetail() {
@@ -26,13 +27,13 @@ export function PnmDetail() {
     return [...pnm.contactLog].sort((a, b) => b.date.toMillis() - a.date.toMillis());
   }, [pnm]);
 
-  if (pnm === undefined) return <Spinner label="Loading…" />;
+  if (pnm === undefined) return <Spinner label="Pulling the plate…" />;
   if (pnm === null) {
     return (
       <div className="card p-6 text-center">
-        <p className="text-sm text-gray-600">That PNM no longer exists.</p>
+        <p className="text-sm text-ink-soft">That PNM is no longer on the board.</p>
         <Link to="/pnms" className="btn-secondary mt-4">
-          Back to list
+          Back to the board
         </Link>
       </div>
     );
@@ -49,42 +50,47 @@ export function PnmDetail() {
 
   return (
     <div className="space-y-4">
-      <Link to="/pnms" className="text-sm text-gray-500 hover:text-gray-700">
-        ← All PNMs
+      <Link
+        to="/pnms"
+        className="inline-block font-display text-xs font-semibold uppercase tracking-[0.14em] text-chalk-dim hover:text-chalk"
+      >
+        ← The board
       </Link>
 
       <div className="card p-4">
         <div className="flex items-start justify-between gap-3">
-          <div>
-            <h2 className="text-xl font-semibold">{pnm.name}</h2>
-            <p className="text-sm text-gray-500">
+          <div className="min-w-0">
+            <h2 className="font-display text-2xl font-semibold uppercase leading-none tracking-[0.02em] text-ink">
+              {pnm.name}
+            </h2>
+            <p className="mt-1.5 text-sm text-ink-soft">
               {[pnm.year, pnm.major].filter(Boolean).join(' · ') || 'Major not recorded'}
-              {pnm.gpa && <span className="ml-1 text-gray-400">· GPA {pnm.gpa}</span>}
+              {pnm.gpa && <span className="text-ink-faint"> · GPA {pnm.gpa}</span>}
             </p>
             {pnm.sourceEvent && (
-              <p className="text-xs text-gray-500">Met at {pnm.sourceEvent}</p>
+              <p className="text-xs text-ink-faint">Met at {pnm.sourceEvent}</p>
             )}
           </div>
           <StatusBadge status={pnm.status} />
         </div>
 
-        <div className="mt-3 flex flex-wrap gap-3 text-sm">
+        <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm">
           {pnm.phone && (
-            <a className="text-blue-700 underline" href={`tel:${normalizePhone(pnm.phone)}`}>
+            <a className="text-stage-contacted underline" href={`tel:${normalizePhone(pnm.phone)}`}>
               {formatPhone(pnm.phone)}
             </a>
           )}
           {pnm.email && (
-            <a className="text-blue-700 underline" href={`mailto:${pnm.email}`}>
+            <a className="text-stage-contacted underline" href={`mailto:${pnm.email}`}>
               {pnm.email}
             </a>
           )}
-          {pnm.socials.instagram && <span className="text-gray-600">IG @{pnm.socials.instagram}</span>}
-          {pnm.socials.snapchat && <span className="text-gray-600">Snap @{pnm.socials.snapchat}</span>}
+          {pnm.socials.instagram && <span className="text-ink-soft">IG @{pnm.socials.instagram}</span>}
+          {pnm.socials.snapchat && <span className="text-ink-soft">Snap @{pnm.socials.snapchat}</span>}
         </div>
 
         {pnm.notes && (
-          <p className="mt-3 whitespace-pre-line rounded-lg bg-gray-50 px-3 py-2 text-sm text-gray-700">
+          <p className="mt-3 whitespace-pre-line rounded-sm bg-ink/[0.06] px-3 py-2 text-sm text-ink-soft">
             {pnm.notes}
           </p>
         )}
@@ -92,16 +98,16 @@ export function PnmDetail() {
         {tags.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-1.5">
             {tags.map((tag) => (
-              <span key={tag} className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-700">
+              <span key={tag} className="attr">
                 {tag}
               </span>
             ))}
           </div>
         )}
 
-        <div className="mt-4 grid grid-cols-2 gap-3">
-          <div>
-            <span className="label">Status</span>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <div className="min-w-0">
+            <span className="label">Stage</span>
             <select
               className="field"
               value={pnm.status}
@@ -109,19 +115,17 @@ export function PnmDetail() {
             >
               {PNM_STATUSES.map((status) => (
                 <option key={status} value={status}>
-                  {status}
+                  {STAGE_LABEL[status]}
                 </option>
               ))}
             </select>
           </div>
-          <div>
+          <div className="min-w-0">
             <span className="label">Assigned lead</span>
             <select
               className="field"
               value={pnm.assignedLead ?? ''}
-              onChange={(e) =>
-                void assignLead(pnm.id, pnm.assignedLead, e.target.value || null)
-              }
+              onChange={(e) => void assignLead(pnm.id, pnm.assignedLead, e.target.value || null)}
             >
               <option value="">Unassigned</option>
               {brothers.map((brother) => (
@@ -148,29 +152,31 @@ export function PnmDetail() {
       {link && <QuickLogCard pnm={pnm} brotherId={link.brotherId} />}
 
       <div className="card">
-        <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
-          <h3 className="font-medium">Contact log</h3>
+        <div className="flex items-center justify-between border-b border-ink/10 px-4 py-3">
+          <h3 className="font-display text-sm font-semibold uppercase tracking-[0.14em] text-ink">
+            Contact log
+          </h3>
           <ContactAge value={pnm.lastContactedDate} />
         </div>
         {log.length === 0 ? (
-          <p className="px-4 py-6 text-center text-sm text-gray-500">
+          <p className="px-4 py-6 text-center text-sm text-ink-faint">
             No contact logged yet.
           </p>
         ) : (
-          <ul className="divide-y divide-gray-100">
+          <ul className="divide-y divide-ink/10">
             {log.map((entry) => (
               <li key={entry.id} className="px-4 py-3">
                 <div className="flex items-baseline justify-between gap-2">
-                  <span className="text-sm font-medium">
+                  <span className="font-display text-sm font-semibold uppercase tracking-[0.08em] text-ink">
                     {entry.method ?? 'Contacted'}
                   </span>
-                  <span className="text-xs text-gray-500">{formatDate(entry.date)}</span>
+                  <span className="stamp text-ink-faint">{formatDate(entry.date)}</span>
                 </div>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-ink-faint">
                   {brotherName(brothers, entry.brotherId)}
                   {entry.event && <span> · {entry.event}</span>}
                 </p>
-                {entry.notes && <p className="mt-1 text-sm text-gray-700">{entry.notes}</p>}
+                {entry.notes && <p className="mt-1 text-sm text-ink-soft">{entry.notes}</p>}
               </li>
             ))}
           </ul>

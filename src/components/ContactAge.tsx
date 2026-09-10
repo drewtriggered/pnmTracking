@@ -1,22 +1,35 @@
-import { contactAge, daysSince } from '../lib/format';
+import { contactAge, daysSince, stampAge } from '../lib/format';
 import { useReminderSettings } from '../settings/SettingsProvider';
 import type { Pnm } from '../types/models';
 
 /**
- * Colour tracks the live reminder thresholds — amber once the lead would be
- * nudged, red once exec would hear about it. Reading the same settings the
- * daily job reads means the list and the notifications can't disagree about
- * who is cold, even after someone retunes them.
+ * Days since last contact, tracking the live reminder thresholds: neutral
+ * grease-pencil until the lead would be nudged, warning amber past the cold
+ * line, deep red once exec would hear about it. Reading the same settings the
+ * daily job reads keeps the board and the notifications from disagreeing about
+ * who has gone quiet.
+ *
+ * `variant="stamp"` is the compact form for a plate ("12D"); the default is
+ * the full phrase for the detail view ("12 days ago").
  */
-export function ContactAge({ value }: { value: Pnm['lastContactedDate'] }) {
+export function ContactAge({
+  value,
+  variant = 'full',
+}: {
+  value: Pnm['lastContactedDate'];
+  variant?: 'full' | 'stamp';
+}) {
   const { coldAfterDays, escalateAfterDays } = useReminderSettings();
   const days = daysSince(value);
   const tone =
     days === null || days >= escalateAfterDays
-      ? 'text-red-600'
+      ? 'text-feedback-error'
       : days >= coldAfterDays
-        ? 'text-amber-600'
-        : 'text-gray-500';
+        ? 'text-feedback-warning'
+        : 'text-ink-faint';
 
-  return <span className={`text-xs ${tone}`}>{contactAge(value)}</span>;
+  if (variant === 'stamp') {
+    return <span className={`stamp ${tone}`}>{stampAge(value)}</span>;
+  }
+  return <span className={`text-sm font-medium ${tone}`}>{contactAge(value)}</span>;
 }

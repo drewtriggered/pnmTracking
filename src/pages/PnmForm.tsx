@@ -5,6 +5,7 @@ import { watchBrothers } from '../data/brothers';
 import { createPnm, findDuplicates, updatePnm, watchPnm } from '../data/pnms';
 import { Spinner } from '../components/Spinner';
 import { parseList } from '../lib/format';
+import { STAGE_LABEL } from '../lib/stages';
 import {
   PNM_STATUSES,
   type Brother,
@@ -115,12 +116,12 @@ export function PnmForm() {
 
   return (
     <form className="space-y-4" onSubmit={(e) => void handleSubmit(e)}>
-      <Link to={pnmId ? `/pnms/${pnmId}` : '/pnms'} className="text-sm text-gray-500">
+      <Link to={pnmId ? `/pnms/${pnmId}` : '/pnms'} className="text-sm text-ink-faint">
         ← Cancel
       </Link>
 
       <div className="card space-y-3 p-4">
-        <h2 className="text-lg font-semibold">{isEdit ? 'Edit PNM' : 'New PNM'}</h2>
+        <h2 className="font-display text-xl font-semibold uppercase tracking-[0.04em] text-ink">{isEdit ? 'Edit PNM' : 'New PNM'}</h2>
 
         <div>
           <label className="label" htmlFor="name">Name</label>
@@ -284,7 +285,7 @@ export function PnmForm() {
               onChange={(e) => setDraft({ ...draft, status: e.target.value as PnmStatus })}
             >
               {PNM_STATUSES.map((status) => (
-                <option key={status} value={status}>{status}</option>
+                <option key={status} value={status}>{STAGE_LABEL[status]}</option>
               ))}
             </select>
           </div>
@@ -306,28 +307,26 @@ export function PnmForm() {
       </div>
 
       {duplicates.length > 0 && (
-        <div ref={dupeRef} className="card border-amber-300 bg-amber-50 p-4">
-          <p className="text-sm font-medium text-amber-900">
-            {duplicates.length === 1 ? 'A PNM' : `${duplicates.length} PNMs`} already on file with
-            this name and phone:
+        <div ref={dupeRef} className="note-warn p-4">
+          <p className="font-display text-sm font-semibold uppercase tracking-[0.1em]">
+            {duplicates.length === 1 ? 'A PNM' : `${duplicates.length} PNMs`} already on the board
+            with this name and phone
           </p>
           <ul className="mt-2 space-y-1 text-sm">
             {duplicates.map((dupe) => (
               <li key={dupe.id}>
-                <Link className="text-blue-700 underline" to={`/pnms/${dupe.id}`}>
+                <Link className="text-stage-contacted underline" to={`/pnms/${dupe.id}`}>
                   {dupe.name}
                 </Link>{' '}
-                <span className="text-gray-600">— {dupe.status}</span>
+                <span className="text-ink-soft">— {dupe.status}</span>
               </li>
             ))}
           </ul>
-          <p className="mt-2 text-sm text-amber-900">
-            Submit again to add anyway.
-          </p>
+          <p className="mt-2 text-sm">Submit again to add anyway.</p>
         </div>
       )}
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-feedback-error">{error}</p>}
 
       <button className="btn-primary w-full" disabled={busy} type="submit">
         {busy ? 'Saving…' : isEdit ? 'Save changes' : 'Add PNM'}
