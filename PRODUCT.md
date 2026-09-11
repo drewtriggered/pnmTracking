@@ -106,11 +106,10 @@ PNM relationship); exec vs. general; "going cold" (a PNM past the reminder
 threshold); digest (one brother's daily reminder); variant / experiment (the
 A/B notification copy).
 
-**Open decisions:** whether SigEp's official identity is binding on this tool
-(see Brand Commitments); whether and when to extend beyond one chapter —
-intended once the tool is proven safe and genuinely useful, then shared with
-other local chapters, but not scheduled; whether exec escalation and its
-~10-day threshold stay long term, kept configurable rather than settled.
+**Open decisions:** whether and when to extend beyond one chapter — intended
+once the tool is proven safe and genuinely useful, then shared with other
+local chapters, but not scheduled; whether exec escalation and its ~10-day
+threshold stay long term, kept configurable rather than settled.
 
 ## Brand Commitments
 
@@ -118,13 +117,20 @@ other local chapters, but not scheduled; whether exec escalation and its
   title, and screen headers. Not confirmed as final.
 - **Organization:** Sigma Phi Epsilon. The pipeline stage "Sell SigEp" comes
   from the chapter's own spreadsheet.
-- **Whether the SigEp national identity** (crest, red / purple / gold, "Balanced
-  Man" language) is a binding constraint is **undecided** — the user has not
-  settled it. Until they do, visual work is not obligated to the SigEp brand
-  system, but should avoid choices that would be costly to reconcile with it
-  later.
-- **No logo or brand asset** has been provided. The current favicon is a
-  placeholder bar-chart mark.
+- **The SigEp national identity is binding.** The chapter supplied the
+  official brand kit (`2026 SigEp Brand Guidelines.pdf` and the Logos archive)
+  on 2026-09-11. The masthead, sign-in, and join screens render the real
+  SigEp Crest — the shield element only, cropped from the kit's vector
+  artwork, full color with the guide's white-outline-on-dark treatment —
+  replacing the earlier hand-drawn placeholder; the favicon and PWA
+  home-screen icons use it too. Per the brand guide's mark-tier rules, a
+  heritage mark like the crest may stand alone only where every surface is
+  member-facing (true here — brothers and exec only, never PNMs); it would
+  need to travel alongside the master-brand "SigEp" logotype if this tool
+  ever became public-facing.
+- **The raw brand kit files** (the Logos zip, the guidelines PDF, a SigEp
+  Fonts zip) live untracked at the repo root — large binaries not meant for
+  git. Only the derived, optimized assets in `public/` are committed.
 - **Voice** in the shipped UI is plain and functional: short labels, direct
   error messages that name the actual problem and where to fix it, no marketing
   tone.

@@ -17,7 +17,7 @@ export function Layout() {
     <div className="min-h-screen">
       <header className="sticky top-0 z-20 bg-board">
         <div className="mx-auto flex max-w-3xl items-start gap-2.5 px-4 pb-2.5 pt-3">
-          <Crest className="mt-0.5 h-9 w-9 shrink-0 text-sigep-gold" />
+          <Crest className="mt-0.5 h-9 w-9 shrink-0 object-contain" />
           <div className="min-w-0 flex-1">
             <div className="flex items-start justify-between gap-3">
               <div>

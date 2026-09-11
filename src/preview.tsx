@@ -76,7 +76,7 @@ function Masthead() {
   return (
     <header className="bg-board">
       <div className="mx-auto flex max-w-3xl items-start gap-2.5 px-4 pb-2.5 pt-3">
-        <Crest className="mt-0.5 h-9 w-9 shrink-0 text-sigep-gold" />
+        <Crest className="mt-0.5 h-9 w-9 shrink-0 object-contain" />
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-3">
             <div>
@@ -255,7 +255,7 @@ function SignInCard() {
   return (
     <div className="flex min-h-[520px] flex-col items-center justify-center px-4">
       <div className="mb-5 flex items-center gap-3 text-chalk">
-        <Crest className="h-9 w-9 text-sigep-gold" />
+        <Crest className="h-9 w-9 object-contain" />
         <div className="leading-none">
           <p className="font-display text-xl font-semibold uppercase tracking-[0.14em]">
             SigEp <span className="text-chalk-dim">·</span> Indiana Tech
