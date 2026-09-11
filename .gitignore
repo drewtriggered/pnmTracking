@@ -14,3 +14,9 @@ ui-debug.log
 functions/node_modules
 functions/lib
 *.tsbuildinfo
+
+# Raw SigEp brand kit — large source binaries; only the derived assets
+# under public/ (crest.png, favicon.png, icon-*.png) are committed.
+/Logos-*.zip
+/SigEp Fonts-*.zip
+/*Brand Guidelines*.pdf

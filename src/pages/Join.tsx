@@ -70,7 +70,7 @@ export function Join() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-4">
-      <Crest className="mb-4 h-9 w-9 text-sigep-gold" />
+      <Crest className="mb-4 h-9 w-9 object-contain" />
       <div className="card w-full max-w-sm p-6">
         <h1 className="font-display text-2xl font-semibold uppercase tracking-[0.03em] text-ink">Enter your invite code</h1>
         <p className="mt-2 text-sm text-ink-soft">

@@ -61,7 +61,7 @@ export function SignIn() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-4">
       <div className="mb-5 flex items-center gap-3 text-chalk">
-        <Crest className="h-9 w-9 text-sigep-gold" />
+        <Crest className="h-9 w-9 object-contain" />
         <div className="leading-none">
           <p className="font-display text-xl font-semibold uppercase tracking-[0.14em]">
             SigEp <span className="text-chalk-dim">·</span> Indiana Tech
