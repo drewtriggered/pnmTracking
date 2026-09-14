@@ -33,9 +33,14 @@ function describeSignInError(code: string): string {
 }
 
 export function SignIn() {
-  const { signIn } = useAuth();
+  const { signIn, redirectError } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  // A redirect sign-in (iOS, or an installed PWA) completes before this page
+  // even mounts — if it failed, say why instead of just showing the button
+  // again with no explanation.
+  const displayError = error ?? (redirectError ? describeSignInError(redirectError) : null);
 
   async function handleSignIn() {
     setBusy(true);
@@ -81,7 +86,7 @@ export function SignIn() {
         <button className="btn-primary mt-6 w-full" disabled={busy} onClick={() => void handleSignIn()}>
           {busy ? 'Opening Google…' : 'Continue with Google'}
         </button>
-        {error && <p className="mt-3 text-sm text-feedback-error">{error}</p>}
+        {displayError && <p className="mt-3 text-sm text-feedback-error">{displayError}</p>}
       </div>
     </div>
   );
