@@ -20,3 +20,10 @@ functions/lib
 /Logos-*.zip
 /SigEp Fonts-*.zip
 /*Brand Guidelines*.pdf
+
+# Chapter PNM data (real people's names, grades and notes). Keep the
+# spreadsheet export on your own machine and pass it to `npm run import:pnms`;
+# never commit it.
+pnm-list*.csv
+*PNM*List*.csv
+*.xlsx
