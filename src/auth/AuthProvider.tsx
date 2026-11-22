@@ -52,6 +52,32 @@ function isIOS(): boolean {
   return /iPad|iPhone|iPod/.test(ua) || (ua.includes('Macintosh') && navigator.maxTouchPoints > 1);
 }
 
+/** Error code for a redirect that came back without a signed-in user. */
+export const REDIRECT_LOST = 'app/redirect-lost';
+
+const REDIRECT_FLAG = 'pnm:signin-redirect';
+
+/** Notes that a redirect sign-in is about to leave the page. */
+async function redirectToGoogle(): Promise<void> {
+  try {
+    sessionStorage.setItem(REDIRECT_FLAG, '1');
+  } catch {
+    // Storage can be off in private modes; the redirect still works.
+  }
+  await signInWithRedirect(auth, googleProvider);
+}
+
+/** Reads and clears the flag, so it only counts for the one return trip. */
+function takeRedirectFlag(): boolean {
+  try {
+    const was = sessionStorage.getItem(REDIRECT_FLAG) === '1';
+    sessionStorage.removeItem(REDIRECT_FLAG);
+    return was;
+  } catch {
+    return false;
+  }
+}
+
 const AuthContext = createContext<AuthState | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -66,11 +92,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // way, but this is where a failed redirect surfaces its reason — without
   // this, a visitor whose redirect silently failed just sees the sign-in
   // button again, with nothing explaining why.
+  //
+  // A redirect can also come back with no result and no error at all, when
+  // the browser hid the hand-off from the page. The flag set just before the
+  // redirect is how that case gets noticed instead of passing for "never
+  // tried".
   useEffect(() => {
-    getRedirectResult(auth).catch((e) => {
-      console.error('Redirect sign-in failed', e);
-      setRedirectError((e as { code?: string }).code ?? 'unknown-error');
-    });
+    const wasRedirecting = takeRedirectFlag();
+    getRedirectResult(auth)
+      .then((result) => {
+        if (wasRedirecting && !result && !auth.currentUser) {
+          setRedirectError(REDIRECT_LOST);
+        }
+      })
+      .catch((e) => {
+        console.error('Redirect sign-in failed', e);
+        setRedirectError((e as { code?: string }).code ?? 'unknown-error');
+      });
   }, []);
 
   useEffect(() => {
@@ -135,7 +173,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // the board there, not just in standalone mode. So skip it and go
         // straight to redirect on any iOS device.
         if (window.matchMedia('(display-mode: standalone)').matches || isIOS()) {
-          await signInWithRedirect(auth, googleProvider);
+          await redirectToGoogle();
           return;
         }
 
@@ -151,7 +189,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             code === 'auth/web-storage-unsupported' ||
             code === 'auth/internal-error'
           ) {
-            await signInWithRedirect(auth, googleProvider);
+            await redirectToGoogle();
             return;
           }
           throw e;

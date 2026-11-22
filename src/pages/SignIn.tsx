@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAuth } from '../auth/AuthProvider';
+import { REDIRECT_LOST, useAuth } from '../auth/AuthProvider';
 import { Crest } from '../components/Crest';
 
 /**
@@ -14,6 +14,8 @@ function describeSignInError(code: string): string {
   }
 
   switch (code) {
+    case REDIRECT_LOST:
+      return 'Google finished, but this browser did not pass the sign-in back to the app. Try again.';
     case 'auth/operation-not-allowed':
     case 'auth/configuration-not-found':
       return 'Google sign-in is not switched on for this Firebase project yet (Authentication → Sign-in method).';
