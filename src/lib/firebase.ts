@@ -1,6 +1,7 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, connectAuthEmulator } from 'firebase/auth';
 import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
+import { resolveAuthDomain } from './authDomain';
 
 const required = [
   'VITE_FIREBASE_API_KEY',
@@ -19,7 +20,12 @@ if (missing.length > 0) {
 
 export const firebaseApp = initializeApp({
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  // Same-origin on Firebase Hosting so redirect sign-in survives Safari's
+  // storage partitioning. See resolveAuthDomain.
+  authDomain: resolveAuthDomain(
+    import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+    typeof window === 'undefined' ? undefined : window.location.host,
+  ),
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,

@@ -31,6 +31,13 @@ Firebase console and your card on file.
    - **Firestore** (production mode)
    - **Authentication → Sign-in method → Google**
    - **Hosting**
+   - **Google sign-in redirect URI** — in Google Cloud console → APIs &
+     Services → Credentials, open the OAuth client named *Web client (auto
+     created by Google Service)* and add
+     `https://<project>.web.app/__/auth/handler` under *Authorized redirect
+     URIs*. On Firebase Hosting the app signs in through its own domain (so
+     iPhone Safari doesn't lose the sign-in on the way back), and Google
+     rejects that hand-off until this URI is listed.
    - **Cloud Messaging** — under Project settings → Cloud Messaging → Web
      configuration, click *Generate key pair*. That's the VAPID key.
 
